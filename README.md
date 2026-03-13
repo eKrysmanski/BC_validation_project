@@ -10,11 +10,11 @@ Compare enriched transcriptomic data to unenriched data to validate that the app
 
 ## Initial Questions
 
-Does target enrichment uniformly increase read counts for low, moderate, and highly expressed genes, or does it disproportionally enrich low or high count transcripts from the unenriched dataset? 
+Does target enrichment uniformly increase transcript counts for low, moderate, and highly expressed genes, or does it disproportionally enrich low or high count transcripts from the unenriched dataset? 
 
 If there are disproportionate increases in enriched read counts, can they be explained by differences in the probe design, such as length, GC content, or melting temperature?
 
-Is the proportional representation of counts distorted in the enriched data?
+Is the proportional representation of transcripts distorted in the enriched data?
 
 Is the relative expression of genes preserved in the enriched data set?
 
