@@ -1,0 +1,15 @@
+Status	E1_S1_L001.bam	E2_S2_L001.bam	E3_S3_L001.bam	E4_S4_L001.bam	E5_S5_L001.bam	E6_S6_L001.bam
+Assigned	10557113	11500133	10489861	11067550	12347600	14638869
+Unassigned_Unmapped	0	0	0	0	0	0
+Unassigned_Read_Type	0	0	0	0	0	0
+Unassigned_Singleton	0	0	0	0	0	0
+Unassigned_MappingQuality	0	0	0	0	0	0
+Unassigned_Chimera	0	0	0	0	0	0
+Unassigned_FragmentLength	0	0	0	0	0	0
+Unassigned_Duplicate	0	0	0	0	0	0
+Unassigned_MultiMapping	0	0	0	0	0	0
+Unassigned_Secondary	0	0	0	0	0	0
+Unassigned_NonSplit	0	0	0	0	0	0
+Unassigned_NoFeatures	36372	57050	53722	60569	48302	77258
+Unassigned_Overlapping_Length	0	0	0	0	0	0
+Unassigned_Ambiguity	107979	87559	59905	77409	56976	113623
