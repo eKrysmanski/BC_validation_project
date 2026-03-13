@@ -22,9 +22,7 @@ Is the relative expression of genes preserved in the enriched data set?
 
 ### Correlation Analysis
 
-I am still trying to understand the differences between Pearson’s and Spearman’s coefficients, but I believe they will be relevant and informative for our objective. 
-
-To determine if rank is preserved in the enriched dataset, we will calculate Spearman’s ρ between the counts per million normalized unenriched and enriched data. Additionally, to determine if reads in the unenriched vs. enriched sample increased linearly, we will calculate Pearson’s r. 
+I am still trying to understand the differences between Pearson’s and Spearman’s coefficients, but I believe they will be relevant and informative for our objective. To determine if rank is preserved in the enriched dataset, we will calculate Spearman’s ρ between the counts per million normalized unenriched and enriched data. Additionally, to determine if reads in the unenriched vs. enriched sample increased linearly, we will calculate Pearson’s r. 
 
 ### Equivalence Tests
 
