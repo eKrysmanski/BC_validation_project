@@ -40,7 +40,7 @@ seq_depth <- RNA_raw %>%
             E5_depth = sum(E5_S5_L001.bam), 
             E6_depth = sum(E6_S6_L001.bam))
 
-seq_depth
+rowMeans(seq_depth)
 
 #Normalize all the counts (Counts per Million)
 # CPM = (Counts / Seq_depth) x 10^6
@@ -64,8 +64,8 @@ head(RNA_norm)
 RNA_sum <- RNA_norm %>%
   rowwise() %>%
   mutate(
-    CPM_mean = mean(c_across(3:8)),
-    CPM_stdev = sd(c_across(3:8))
+    CPM_mean_E = mean(c_across(3:8)),
+    CPM_sd_E = sd(c_across(3:8))
   ) %>%
   ungroup()
 
@@ -87,11 +87,9 @@ length(RNA_raw$Geneid)
 #Filter out only genes with transcript counts; but that's nearly 6000 genes. 
 
 RNA_sub <- RNA_sum %>% 
-  filter(CPM_mean > 0)
+  filter(CPM_mean_E > 0)
 
 length(RNA_sub$Geneid)
-
-rm(RNA_sub)
 
 # There is definately some noise, and this may need to be cleaned up.
 
@@ -109,16 +107,21 @@ rm(RNA_sub)
 # genes that were targeted without getting a list. The probe list I found is 
 # like 1075 targets, which I believe includes known and predicted splice variants. 
 
-#Save the cleaned data;
-#  Save a smaller file with only genes were counts > 0
-#  Save a larger file with all genes and counts even if 0
+#From the thesis: "Zero and low-level count data was filtered out based on counts 
+# per million (CPM) to account for varying library sizes. Genes with > 0.33 CPM (~10 reads for 
+# a 30M library size) from the unenriched library and > 0.5 CPM (~3 reads for a 6M library size) 
+# for the enriched library in at least 3 of the 6 samples were retained.
+
+#Choice seems arbitrary; might need to ask about this; what was the rationale for 
+# the two different filters?
+
+RNA_sum <- RNA_sum %>% 
+  filter(rowSums(across(ends_with("_CPM"), ~ .x > 0.5)) >= 3)
+
 
 #Full file
 write.csv(RNA_sum, 
           file = "data/clean/CPM_liver_enriched_full.csv")
-
-write.csv(RNA_sub, 
-          file = "data/clean/CPM_liver_enriched_expressed.csv")
 
 
 

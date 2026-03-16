@@ -53,6 +53,8 @@ seq_depth <- RNA_raw %>%
 
 seq_depth
 
+rowMeans(seq_depth)
+
 #Normalize counts to CPM
 # CPM = counts / seq_depth * 10^6
 
@@ -73,23 +75,29 @@ RNA_norm
 
 RNA_sum <- RNA_norm %>% 
   rowwise() %>% 
-  mutate(mean_CPM = mean(c_across(2:7)), 
-         std_CPM = sd(c_across(2:7)))
+  mutate(CPM_mean_UN = mean(c_across(2:7)), 
+         CPM_sd_UN = sd(c_across(2:7)))
 
 
 head(RNA_sum)
 
-#subset to only expressed genes
-RNA_sub <- RNA_sum %>% 
-  filter(mean_CPM > 0)
 
-length(RNA_sub$Geneid)
+#From the thesis: "Zero and low-level count data was filtered out based on counts 
+# per million (CPM) to account for varying library sizes. Genes with > 0.33 CPM (~10 reads for 
+# a 30M library size) from the unenriched library and > 0.5 CPM (~3 reads for a 6M library size) 
+# for the enriched library in at least 3 of the 6 samples were retained.
+
+#So, filter out low-level count data; for the enriched the filter is >0.5 CPM 
+# in at least 3 of the 6 samples. This will probably be interesting code... 
+
+RNA_sum <- RNA_sum %>% 
+  filter(rowSums(across(ends_with("_CPM"), ~ .x > 0.33)) >= 3)
+
+#So this checks if each of the CPM columns per row are >0.5, 
+# then counts the number of them that are; and checks if it is
+# equal to or greater than 3
 
 #Save the cleaned files as the full and only genes with counts
 
 write.csv(RNA_sum, 
           file = "data/clean/CPM_liver_unenriched_full.csv")
-
-write.csv(RNA_sub, 
-          file = "data/clean/CPM_liver_unenriched_expressed.csv")
-          
