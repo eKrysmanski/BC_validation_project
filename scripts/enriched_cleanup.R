@@ -115,10 +115,10 @@ rm(RNA_sub)
 
 #Full file
 write.csv(RNA_sum, 
-          file = "data/clean/RNA_sum_CPM_full.csv")
+          file = "data/clean/CPM_liver_enriched_full.csv")
 
 write.csv(RNA_sub, 
-          file = "data/clean/RNA_sum_CPM_grtr_zero.csv")
+          file = "data/clean/CPM_liver_enriched_expressed.csv")
 
 
 
