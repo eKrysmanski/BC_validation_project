@@ -1,6 +1,7 @@
 # Important Labeling Information
 
-Enriched:
+## Enriched:
+
 E1-E3 = male liver
 
 E4-E6 = female liver
@@ -17,7 +18,8 @@ E19–E21 = male kidney
 
 E22–E24 = female kidney
 
-Conventional RNA-seq:
+## Conventional RNA-seq:
+
 L1-L3 = male liver
 
 L4-L6 = female liver
