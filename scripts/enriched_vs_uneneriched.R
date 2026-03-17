@@ -64,7 +64,7 @@ unenriched_46_sum <- unenriched_46 %>%
 
 #Join male un/en dataframes
 
-full_13 <- inner_join(enriched_13_sum, unenriched_13_sum, by = "Geneid") %>%
+full_13 <- inner_join(enriched_13_sum, unenriched_13_sum, by = "Geneid")
   
 
 #Plot "male" or "female" against other
@@ -90,8 +90,4 @@ ggplot(data = full_46, aes(x = CPM_mean_UN46, y = CPM_mean_E46)) +
   geom_abline(intercept = 0, slope = 1, color = "red", linetype = "dashed") +
   theme_bw()
 
-
-
 #So 13 is almost certainly the males, and 46 are almost certainly the females... 
-
-#
