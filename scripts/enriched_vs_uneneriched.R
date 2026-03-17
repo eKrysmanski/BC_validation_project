@@ -64,7 +64,7 @@ unenriched_46_sum <- unenriched_46 %>%
 
 #Join male un/en dataframes
 
-full_13 <- inner_join(enriched_13_sum, unenriched_13_sum, by = "Geneid") %>%
+full_13 <- inner_join(enriched_13_sum, unenriched_13_sum, by = "Geneid")
   
 
 #Plot "male" or "female" against other
