@@ -130,6 +130,10 @@ I have now performed all the comparisons and equivalence tests on slopes;
        - If only the high count transcripts are distorting the data, this would suggest that abundant transcripts
          might be over-represented in enriched data; but who is to say that conventional RNA seq is closer to 
          the true count that bait-enriched RNA-seq
+UPDATE: I have since removed the high count datapoint, and the slope is now practically equivalent to 1 within
+        5% equivalence bounds. New questions though, why does that transcript not skew the female data, and 
+        why is the counts for that transcript so ridiculously high in the enriched?
+
 - The female data has a slope practically equivalent to one, within 5% equivalence bounds
 
 - Prepared some simple figures with the data; want to compile all into one
@@ -153,4 +157,4 @@ Important One; comparing technically identical datasets to determine/defend assu
  "practically equivalent"
  
  I've taken a look at comparing the male vs. female in the unenriched data; but sex differences could
-  result in differential expression
+  result in differential expression 
