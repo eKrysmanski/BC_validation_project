@@ -67,3 +67,90 @@ Questions:
     like PCAs, which appear to be a popular tool in omics work; I think with 
     male/female and multiple tissues it should be a pretty good example dataset 
     to work from. 
+    
+    
+March 18, 2026___________________________________________________________________
+
+- Lots more thinking...
+
+Started to play around with the female liver data in enriched_vs_unenriched.R
+- Fit a linear model on log10(CPM) for the enriched and unenriched data
+- Plots look decent, although it's maybe not the most normal looking qq plot I've seen
+- LM are pretty robust against departures from normality as per Bolker (iirc), so im ok with it
+- Pulled the slope of the line out of the summary manually; will look into writing code to
+- do that automatically as to not rely on manual inputs in case anything is changed down the line
+- Slope looks very close to 1, around 1.01... I think
+
+Want to take a shot at using TOSTER to check equivalence
+- I want to determine what defensible equivalence bounds would be empirically by 
+  comparing two highly similar datasets, but for now I will be somewhat conservative 
+  and use 10% difference as my equivalence bounds. 
+- I am going to compare my slope + SE from the linear model, against a hypothetical
+  slope from data that is perfectly correlated, so a slope = 1, with sd = 0, with the 
+  same number of datapoints. 
+- I think this is a defensible way of doing this; ideally I'd have a slope from two 
+  datasets that are practically equivalent (i.e. technical replicates from same sample)
+  but, a perfect correlation should be more strict rather than less, so I think this is 
+  ok. 
+- After running the TOST, it appears that the slope is practically equivalent to 1, within
+  10% difference; so look's good (as we suspected)
+
+Want to visualize this somehow:
+- Created a ggplot to visualize the TOST results;
+- Utilized:
+     - geom_vline() to create vertical dashed lines at the equivalence bounds
+     - geom_vline() to create vertical line at 0
+- Ploted the difference in mean (d_slope) with 90% confidence intervals from 
+  the TOSTER results
+- Shows that 1, the difference in slope is not clearly different from 0 (CIs overlap)
+  and that 2, the CIs are well-within the equivalence bounds set; even within 5% difference
+  I think. 
+  
+Thoughts on normalizing/visualizing the data
+- I think I can mean-center the data so that the intercept is closer to 0, more 
+  like a perfectly correlated dataset; while preserving the relative differences
+- Done some thinking about other ways of noramlizing the data:
+    - DESeq2 and TMM apparently have a way of doing size-factor normalization
+        I think the idea is it calculates a size factor using the geometric mean
+          from both datasets, and uses this to scale down the "higher" dataset, so 
+          that they are one identical scales. 
+        I think this could work, but need to better understand it before doing
+          anything with it. 
+          
+March 19, 2026__________________________________________________________________
+
+I have now performed all the comparisons and equivalence tests on slopes; 
+
+- The full data has a slope practically equivalent to one, within 5% equivalence bounds
+- The male data is not practically equivalent to one within 5% equivalence bounds, but it is 
+   also not clearly different from 1
+       - I think there are some large count data that are being influential on the slope, and 
+         driving it higher;
+       - New Question: Is the slope distorted when comparing low, moderate, or high count transcripts?
+       - If only the high count transcripts are distorting the data, this would suggest that abundant transcripts
+         might be over-represented in enriched data; but who is to say that conventional RNA seq is closer to 
+         the true count that bait-enriched RNA-seq
+- The female data has a slope practically equivalent to one, within 5% equivalence bounds
+
+- Prepared some simple figures with the data; want to compile all into one
+
+Next steps;
+- Performing equivalence tests on individual transcripts... 
+- What do I need:
+       - I need a mean, sd, and n for two groups I want to compare
+- What do I compare?
+       - I could try relative expression, by taking log2(FC) to a reference gene;
+       - What would be the reference gene?
+              - Could choose a random transcript that does not differ much between male/female
+              - Was there a more "intentful" reference included in the probes? ask
+        - That gives me a ratio; but not sd and an n = 1
+- Might need to mean-centre the data to remove scaling differences, then compare the counts directly
+    - I think this is fine to do and relatively easy
+- Could revisit thinking about the scale-factor normalization from DESeq2 or TMM
+    - This may also be a reasonable approach 
+    
+Important One; comparing technically identical datasets to determine/defend assumptions for what is 
+ "practically equivalent"
+ 
+ I've taken a look at comparing the male vs. female in the unenriched data; but sex differences could
+  result in differential expression
