@@ -1,6 +1,7 @@
 #Simple plot to see if the data looks like it's supposed to
 library(tidyverse)
-
+library(ggplot2)
+library(TOSTER)
 #Read in the data
 enriched <- read.csv(file = "data/clean/CPM_liver_enriched_full.csv", header = TRUE)
 unenriched <- read.csv(file = "data/clean/CPM_liver_unenriched_full.csv", header = TRUE)
@@ -27,17 +28,17 @@ plot(full_lm) #Looks alright; maybe a slight neg trend for scale location but da
 summary(full_lm)    #Probably a few influential points causing this trend
 
 #Equivalence Test against imaginary, perfectly correlated data
-library(TOSTER)
-
 TOST_res_full <- tsum_TOST(m1 = 1.0108, m2 = 1, 
           sd1 = (0.01491*sqrt(437)), sd2 = 0, 
           n1 = 437, n2 = 437, 
           eqb = 0.05, eqbound_type = "raw", 
-          var.equal = FALSE)
+          var.equal = FALSE) %>% 
+  print()
 
 #Passes equivalence test within 5% difference; chosen arbitrarily but is probably negligable differences
 #Let's visualize the results nicely
 
+#Create dataframe pulling from the TOST results directly, in case anything is ever changed
 TOST_full <- data.frame(
   d_slope = TOST_res_full$effsize[1,1],
   c_int_low = TOST_res_full$effsize[1,3],
@@ -45,8 +46,7 @@ TOST_full <- data.frame(
   eqb_high = TOST_res_full$eqb[1,2],
   eqb_low = TOST_res_full$eqb[1,3])
 
-library(ggplot2)
-
+#ggplot
 ggplot(TOST_full, aes(x = d_slope)) +
   geom_vline(aes(xintercept = eqb_high), linetype = "dashed", color = "red") +
   geom_vline(aes(xintercept = eqb_low),  linetype = "dashed", color = "red") +
@@ -73,9 +73,9 @@ ggplot(TOST_full, aes(x = d_slope)) +
     margins = margin(t = 15, r = 15, l = 15, b = 15, unit = "pt"), 
   )
 
-#Looks good; could probably work on equivalence tests from here using the full 
-# dataset (males and females pooled). Going to go ahead and look at males/females
-# individually anyways to make sure it all matches up properly. 
+#Looks good; could probably make it more pretty but it's fine. Let's move on to 
+# individual comparisons of male un/en and female un/en; perhaps using the full 
+# data is clouding some distortion that may exist
 
 #####################Subsetting data and filtering to targets###################
 #Samples E1-E3 are males, and samples E4-E6 are females. 
@@ -129,7 +129,7 @@ unenriched_46_sum <- unenriched_46 %>%
 
 male_data <- inner_join(enriched_13_sum, unenriched_13_sum, by = "Geneid")
   
-#Plot "male" or "female" en vs. un 
+#Plot "male" en vs. un 
 
 ggplot(data = male_data, aes(x = CPM_mean_UN13, y = CPM_mean_E13)) +
   geom_point() +
@@ -139,17 +139,24 @@ ggplot(data = male_data, aes(x = CPM_mean_UN13, y = CPM_mean_E13)) +
   geom_smooth(method = "lm", formula = y ~ x, se = TRUE, colour = "steelblue") +
   theme_bw()
 
+#I can see the lm has a slightly greater slope than a theoretical 1:1 line;
+#This might be driven by some of those high count transcripts, or perhaps some 
+# of the low count transcripts. Thinking of the system the likelihood of capturing
+# the high abundance is probably much higher than the low abundance; if there is similar
+# amount of probe fishing for either; might explain what I'm seeing. 
+
 #Fit the lm
 
 male_lm <- lm(log10(CPM_mean_E13) ~ log10(CPM_mean_UN13), data = male_data)
-plot(male_lm) #look ok, scale location line suggests a small negative trend; but data looks randomly scattered
+plot(male_lm)                     #look ok, scale location line suggests a small negative trend; but data looks randomly scattered
 performance::check_model(male_lm) #Basically showing the same thing; data is a bit non-normal but should be fine for lm
 summary(male_lm)
 
 #Equivalence test against hypothetical perfectly correlated data
 TOST_res_male <- tsum_TOST(m1 = 1.0523, sd1 = (0.1808*sqrt(436)), n1 = 436, 
                            m2 = 1, sd2 = 0, n2 = 436, 
-                           eqb = 0.2, eqbound_type = "raw", var.equal = FALSE)
+                           eqb = 0.05, eqbound_type = "raw", var.equal = FALSE) %>% 
+  print()
 
 #Let's visualize these results
 TOST_male <- data.frame(
@@ -186,6 +193,12 @@ ggplot(TOST_male, aes(x = d_slope)) +
     margins = margin(t = 15, r = 15, l = 15, b = 15, unit = "pt"), 
   )
 
+#Interesting; looks like it fails the equivalence test for 5%; probably fails 
+# for even 20% slope for the lm was =5% even without se; so not that surprising
+#Made some notes in journal for Mar 19, 2026; but tldr I think i'll divide the 
+# data into low, moderate, and high counts, then do equivalence tests on each. 
+# I think some high counts are skewing the slope upwards, which doesnt mean the 
+# rest of the enriched data is also distorted
 
 #Female Data____________________________________________________________________
 
@@ -296,14 +309,21 @@ summary(MvF_lm)
 # probably more than reasonable to say the slope difference is practically negligable. 
 #I think we could, and maybe should relax it to 7.5% or 10%
 
+#Some of these dataframes are actually quite useful; going to save some of them
 
+write.csv(data_full, file = "data/clean/probe_targets_full.csv")
+write.csv(male_data, file = "data/clean/probe_targets_male.csv")
+write.csv(female_data, file = "data/clean/probe_targets_female.csv")
 
 #Messing around with normalization methods....
 
-#Going to try a different way of normalizing, log2(CPM)
+#Going to try a different way of normalizing, log2(CPM);
+#WARNING -- did a stupid; adding the pseudocount is not done correctly, it's +1 
+#           to counts/seq_depth; this is quick and probably too dirty...
+#Will revisit later. 
 
 log2_un <- unenriched %>% 
-  mutate(raw_UN1 = L1_CPM/10E6 + 1, #multiply by
+  mutate(raw_UN1 = L1_CPM/10E6 + 1, #divide by 1 million and add 1 pseudocount
          raw_UN2 = L2_CPM/10E6 + 1, 
          raw_UN3 = L3_CPM/10E6 + 1,
          log2_UN1 = log2(raw_UN1*10E6), 
