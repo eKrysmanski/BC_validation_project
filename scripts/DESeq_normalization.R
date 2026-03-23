@@ -4,6 +4,8 @@ library(dplyr)
 library(tibble)
 library(ggplot2)
 library(TOSTER)
+library(tidyr)
+library(purrr)
 
 read_data <- read_delim("data/STAR_all_liver_gene_counts.txt", delim = "\t", skip = 1, show_col_types = FALSE)
 genes <- read.table("data/defensome_genes_symbol_only.tsv", sep = "\t", header = FALSE)
@@ -93,6 +95,7 @@ ggplot(data = means_table, aes(x = unenriched_f_mean, y = enriched_f_mean)) +
 lm_combined <- lm(log10(enriched_mean) ~ log10(unenriched_mean), data = means_table)
 lm_male <- lm(log10(enriched_m_mean) ~ log10(unenriched_m_mean), data = means_table)
 lm_female <- lm(log10(enriched_f_mean) ~ log10(unenriched_f_mean), data = means_table)
+plot(lm_combined)
 
 value_table <- summary(lm_combined)$coefficients
 value_table_m <- summary(lm_male)$coefficients
@@ -105,7 +108,7 @@ TOST_combined_slope <- tsum_TOST(m1 = value_table[2,"Estimate"], m2 = 1,
                            n1 = nrow(means_table), n2 = nrow(means_table), 
                            eqb = 0.05, eqbound_type = "raw", 
                            var.equal = FALSE)
-#Save a df
+#Save a df including both sexes
 TOST_combined <- data.frame(
   d_slope = TOST_combined_slope$effsize[1,1],
   c_int_low = TOST_combined_slope$effsize[1,3],
@@ -168,3 +171,27 @@ ggplot(TOST_female, aes(x = d_slope)) +
     panel.grid.minor.y = element_blank(), 
     margins = margin(t = 15, r = 15, l = 15, b = 15, unit = "pt"), 
   )
+
+# Making table for individual gene regressions
+normalized_df$genes <- rownames(normalized_df)
+normal_longer <- pivot_longer(normalized_df,
+  cols = -genes,              
+  names_to = "sample",
+  values_to = "expression"
+)
+
+sample_info <- data.frame(
+  sample = colnames(normalized_df)[1:12],
+  library_type = c("enriched","enriched","enriched","enriched", "enriched","enriched", "unenriched", "unenriched","unenriched","unenriched","unenriched","unenriched")
+)
+linear_ready <- normal_longer %>%
+  left_join(sample_info, by = "sample")
+linear_ready
+
+models <- linear_ready %>%
+  group_by(genes) %>%
+  nest() %>%
+  mutate(model = map(data, ~ lm(log10(expression+1) ~ library_type, data = .)))
+results <- models %>%
+  mutate(slope = map_dbl(model, ~ coef(.x)[2]))
+view(results)
