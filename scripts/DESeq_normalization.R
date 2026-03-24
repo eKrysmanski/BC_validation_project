@@ -44,7 +44,7 @@ normalized_counts <- counts(dds_sf, normalized = TRUE)
 
 normalized_counts <- counts(dds_sf, normalized = TRUE)
 normalized_counts
-normalized_df <- as.data.frame(normalized_counts)
+normalized_df <- as.data.frame(normalized_counts) %>% rownames_to_column("Geneid")
 View(normalized_df)
 
 means_table <- normalized_df %>% 
@@ -64,7 +64,8 @@ means_table <- normalized_df %>%
 
 view(means_table)
 write.csv(means_table, file = "data/clean/DESeq2_normalized_liver_combined.csv")
-
+fold_change <- means_table$enriched_mean/means_table$unenriched_mean
+mean(fold_change)
 # Male and Female Enriched vs Unenriched
 ggplot(data = means_table, aes(x = unenriched_mean, y = enriched_mean)) +
   geom_point() +
@@ -146,7 +147,7 @@ TOST_female <- data.frame(
 
 
 # Visualization 
-ggplot(TOST_female, aes(x = d_slope)) +
+ggplot(TOST_combined, aes(x = d_slope)) +
   geom_vline(aes(xintercept = eqb_high), linetype = "dashed", color = "red") +
   geom_vline(aes(xintercept = eqb_low),  linetype = "dashed", color = "red") +
   geom_vline(aes(xintercept = 0), linetype = "dashed", color = "black") +
@@ -169,29 +170,30 @@ ggplot(TOST_female, aes(x = d_slope)) +
     axis.title.x = element_text(size = 15, vjust = -1),
     panel.grid.major.y = element_blank(), 
     panel.grid.minor.y = element_blank(), 
-    margins = margin(t = 15, r = 15, l = 15, b = 15, unit = "pt"), 
-  )
+    margins = margin(t = 15, r = 15, l = 15, b = 15, unit = "pt"), )
 
 # Making table for individual gene regressions
 normalized_df$genes <- rownames(normalized_df)
 normal_longer <- pivot_longer(normalized_df,
   cols = -genes,              
   names_to = "sample",
-  values_to = "expression"
-)
+  values_to = "expression")
 
 sample_info <- data.frame(
   sample = colnames(normalized_df)[1:12],
-  library_type = c("enriched","enriched","enriched","enriched", "enriched","enriched", "unenriched", "unenriched","unenriched","unenriched","unenriched","unenriched")
-)
+  library_type = c("enriched","enriched","enriched","enriched", "enriched","enriched", "unenriched", "unenriched","unenriched","unenriched","unenriched","unenriched"))
+
 linear_ready <- normal_longer %>%
   left_join(sample_info, by = "sample")
-linear_ready
 
 models <- linear_ready %>%
   group_by(genes) %>%
   nest() %>%
   mutate(model = map(data, ~ lm(log10(expression+1) ~ library_type, data = .)))
+
 results <- models %>%
   mutate(slope = map_dbl(model, ~ coef(.x)[2]))
 view(results)
+
+
+
