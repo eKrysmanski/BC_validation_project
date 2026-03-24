@@ -7,3 +7,14 @@ DESeq will scale the enriched and unenriched to the same relative amounts. So 1 
 
 Looked at the diagnostics looks pretty similar to the cpm plots. Slope of the DESeq2 normalization fit better over the 1:1 line. All of the linear models of the combined sexes and individual sexes showed equivalence to the 1:1 slope line which was expected. However it did fit TFA better than CPM normalization as that on screws with the male CPM normalization. 
 Will look at creating models for individual genes then looking at if any individual genes are strangely skewed more or less so by enriching the sequencing library. 
+
+## March 24th 
+TOST individual genes, using mean and sd of normalized data, 
+  Steps: 
+  mean and sd of normalized values for each gene
+  Perform TOST for each gene
+  Extract p-values and plotting data from tests into same data frame 
+  Pass fail logical test p-value <0.05 
+                  nhst = significantly different from 0 
+                  tost = practically equivalent within equivalence bounds 
+  
