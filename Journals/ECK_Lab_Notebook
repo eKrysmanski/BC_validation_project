@@ -148,7 +148,7 @@ Next steps;
               - Was there a more "intentful" reference included in the probes? ask
         - That gives me a ratio; but not sd and an n = 1
 - Might need to mean-centre the data to remove scaling differences, then compare the counts directly
-    - I think this is fine to do and relatively easy
+    - I think this is fine to do and a relatively easy thing to do...
 - Could revisit thinking about the scale-factor normalization from DESeq2 or TMM
     - This may also be a reasonable approach 
     
@@ -157,3 +157,109 @@ Important One; comparing technically identical datasets to determine/defend assu
  
  I've taken a look at comparing the male vs. female in the unenriched data; but sex differences could
   result in differential expression and inflate SE. 
+  
+March 20, 2026__________________________________________________________________
+
+Plans for today:
+
+Try mean-centering the data and performing individual comparisons of all the transcripts
+    If I get there; use multiple-test correction to get adjusted p-values
+    Plot all the results on the same figure; should look pretty neat I think
+    
+
+Clean up my scripts so far; put in a cleaner order without my comment notes
+Write a short README to describe what the scripts do, and the order they are used
+
+
+Note: had time to mess around with alternative normalization methods, but could not get
+      one where the enriched and unenriched were on similar scales. Did not get around to
+      working on cleaning up the scripts or writing a README for describing order. 
+      
+
+March 23, 2026__________________________________________________________________
+
+Thoughts:
+- Was thinking here and there over the weekend about ways in which I can normalize the data, 
+  or manipulate the data, such that the enriched and unenriched are on the same scale and 
+  comparable. 
+- Considered maybe the two just won't ever be on the same scale; especially since looking at
+  a distribution of FC using various normalization methods results in values that are certainly
+  not 1, or even close to 1, and on top of that they are not exactly consistent. 
+- Revisit what I'm actually trying to do -- The main goal is to show that the enriched data is 
+  practically equivalent to the unenriched. In practice this means that expression patterns are 
+  maintained, thus relative evaluating the expression of enriched and unenriched data is a reasonable
+  approach to this. Using relative expression, there should be very similar FC within datasets to a 
+  reference. 
+- Initially turned away the idea of using FC since it would not give me sd if I just calculated FC 
+  using the mean counts; but I'm an idiot because I can (and should) be calculating FC sample-wise, 
+  then I can take the mean and sd across samples. 
+  
+Goals for Today:
+- Determine a gene to use as a pseudoreference; there doesnt appear to be a true
+  reference gene in the data (from what I know) so I need to figure out what gene
+  target I should use for reference.  
+      - To do this I think I will calculate a measure of variation (like coefficient of var)
+        and select the gene that has the lowest within each dataset individually, then across
+        the two datasets. 
+      - After doing this, I went with akr1a1b
+      - After doing some searching I also found a method for choosing the best reference out of a 
+        set of candidate genes; which I think I heard of when I was doing reading about qPCR
+        methodology at some point. 
+
+geNorm M-value___
+Basically, measures the stability of the reference gene
+   A low M --> stable gene (consistent expression across conditions -- in my case; samples)
+   A high M --> unstable gene (expression fluctuates)
+   
+geNorm is pretty simple to calculate:
+1. For a gene, compute pairwise variation with every other gene
+2. Take the average of these variations; this is the M-value
+3. Remove hte gene with the highest M-value (least stable)
+4. Recalculate M-values with the remaining genes
+5. Repeat until only two genes remain
+
+This creates a "ranked list", the remaining two genes would normally be the most stable/
+ best reference genes from the candidate list. However, I do not expect that they will be
+ the same for both the enriched and unenriched datasets. Instead I want to get this ranked 
+ list, then choose the highest rank for the enriched, that is also very high in the unenriched. 
+ I will probably choose this by feel; but could probably take the sum of the two ranks as a 
+ defensible way to decide; although it's probably perfectly reasonable to just pick since 
+ choice of a reference is somewhat arbitrary (kinda but not really, but also kinda)
+
+I believe it's acceptable to use a threshold for acceptable references; from the original
+ geNorm paper, they suggest an M < 1.5 is acceptable, and and M < 1.0 is preferred. 
+ 
+Luckily, M-values are used in qPCR to validate reference genes so there is a BioC package
+ that can rank references and calculate M values. I see no issue with using CPM in place
+ of cycle threshold values. I decided to check the genes with the lowest 50 CVs in either
+ enriched or unenriched, then took the genes that were in both. These I treated as candidates 
+ for the reference gene. txn2 appears to slightly beat out akr1a1b when considering 
+ both the enriched and unenriched data; will swap to using that if I feel less lazy. 
+ I have spent around 5-6 hours working on this today, so might stop here for now. All of the M-vals
+ calculated were reasonable; within the preferred range described above. 
+ 
+Next step:
+-  Calculate equivalence for individual genes; using the relative expression to a reference
+   gene (txn1)
+   
+   
+Notes: All of the sudden geNorm() stopped working; will need to figure out alternative
+
+March 24, 2026__________________________________________________________________
+
+- Started by fixing the code for calculating the geNorm M-values; had to hard restart R
+- txn2 is definately better reference than akr1ab1; made the change to the code and the line 
+  for the linear model is closer to and intercept and slope of 1; basically overlaps a 
+  1:1 line which is great
+
+Plans for Today:
+- Perform the gene-by-gene equivalence tests
+- Adjust p-values (multiple test corrections)
+- Create a plot to visualize the results
+- Interrogate genes that are "non-equivalent", are they so bad that they 
+  would distort interpretation?
+      - Follow up, do they show similar patterns in other tissue types (if they are 
+        not so far off that they look like DEGs)
+- Ask authour about that one super high count gene in the enriched dataset (tfa)
+- Begin to clean up the code I've written so far; 
+- Write some more formal notes on the stats done and tools used so far
