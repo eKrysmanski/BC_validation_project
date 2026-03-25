@@ -263,3 +263,41 @@ Plans for Today:
 - Ask authour about that one super high count gene in the enriched dataset (tfa)
 - Begin to clean up the code I've written so far; 
 - Write some more formal notes on the stats done and tools used so far
+
+
+March 35, 2026__________________________________________________________________
+
+So, the DESEQ2 normalization was not nearly as good as it first appeared; not a 
+ single gene appeared the be practically equivalent within massive bounds. this 
+ is not all that surprising, the enriched data had huge counts with small seq 
+ depth, and the unenriched had medium to low counts with a massive seq depth. 
+
+Returned to my relative expression idea; spent a long time writing, troubleshooting, 
+ and cleaning up the code for determining reference genes, calculating FC, and 
+ performing gene-by-gene TOSTs between the enriched and unenriched.
+ 
+Relative_expression_TOSTs.R contains basic plots, and the results of the TOSTs for
+ the full dataset, male, and female tissue. Turned out reasonably well; there are 
+ some genes with quite different relative expression
+ 
+Would not be a bad idea to interrogate these "not equivalent" genes further; do they
+ retain incresed/decreased expression as unenriched, why and how are they different
+ from the unenriched data?
+ 
+New questions to think about looking in to...
+ - Does bait-capture enrichement reduce sample-wise variation?
+ - Are the relative differences larger or smaller with the enriched relative to unenriched?
+ - Are small differences more clear?
+ 
+To-do:
+- Spending a lot of time on this; so I will try to be less ambitious for today
+- Clean up scripts; add order and what each script does to the README for clarity
+- Plan on how to present the TOST data; I've created basic TOST-plots (as I call them) 
+   but I think that a volcano-style plot would also work well;
+- Maybe revisit the global TOST plots, combine with colour coding;
+       - Use as a way to figure out a more concrete design for other TOST plots
+- Fix global TOSTs to use the correct one-sample TOST format; despite it providing
+     identical results it should be fixed to avoid any confusion. 
+     
+     
+Fixed the code for the global TOSTs; created simple plot with all 3 results
