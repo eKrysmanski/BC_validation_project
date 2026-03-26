@@ -1,4 +1,5 @@
 #Looking into relative expression to a reference for comparing gene by gene
+##Reading in data##  
 library(tidyverse)
 library(ggplot2)
 library(ctrlGene)
@@ -120,6 +121,28 @@ ggplot(data = FC_data, aes(x = mean_FC_un, y = mean_FC_e)) +
   scale_x_log10() +
   scale_y_log10() +
   theme_minimal()
+
+#Linear Model
+full_lm <- lm(formula = log10(mean_FC_e) ~ log10(mean_FC_un), data = FC_data)
+plot(full_lm) #not the most normal thing in the world; but alright and lm's are pretty robust against escape from normality
+full_lm_res <- summary(full_lm)
+
+#Intercepy TOST
+full_int_tost <- tsum_TOST(m1 = full_lm_res$coefficients["(Intercept)","Estimate"], 
+                          sd1 = full_lm_res$coefficients["(Intercept)", "Std. Error"], 
+                          n1 = nrow(FC_data), 
+                          eqb = 0.1, eqbound_type = "raw", var.equal = FALSE)
+
+#Slope TOST
+full_slope_tost <- tsum_TOST(m1 = full_lm_res$coefficients["log10(mean_FC_un)","Estimate"] - 1, 
+                            sd1 = full_lm_res$coefficients["log10(mean_FC_un)", "Std. Error"], 
+                            n1 = nrow(FC_data), 
+                            mu = 1,
+                            eqb = 0.1, eqbound_type = "raw", var.equal = FALSE)
+
+full_int_tost   #Intercept is clearly different from 0, and  practically equivalent to 0 with 10% bounds
+full_slope_tost #Intercept is clearly different from 0, and practically equivalent to 1 within 10% bounds
+
 
 #TOST
 e_bounds <- 3
@@ -356,7 +379,32 @@ ggplot(data = FC_male, aes(x = mean_FC_un, y = mean_FC_e)) +
   scale_y_log10() +
   theme_minimal()
 
-#Now perform equivalence tests
+#TOST on line for intercept of 0, and slope of 1; claim equivalence for relative expression patterns
+
+#Linear Model
+male_lm <- lm(formula = log10(mean_FC_e) ~ log10(mean_FC_un), data = FC_male)
+plot(male_lm) #not the most normal thing in the world; but alright and lm's are pretty robust against escape from normality
+male_lm_res <- summary(male_lm)
+
+#Intercept TOST
+male_int_tost <- tsum_TOST(m1 = male_lm_res$coefficients["(Intercept)","Estimate"], 
+                       sd1 = male_lm_res$coefficients["(Intercept)", "Std. Error"], 
+                       n1 = nrow(FC_male), 
+                       eqb = 0.1, eqbound_type = "raw", var.equal = FALSE)
+
+#Slope TOST
+male_slope_tost <- tsum_TOST(m1 = male_lm_res$coefficients["log10(mean_FC_un)","Estimate"] - 1, 
+                             sd1 = male_lm_res$coefficients["log10(mean_FC_un)", "Std. Error"], 
+                             n1 = nrow(FC_male), 
+                             mu = 1,
+                             eqb = 0.1, eqbound_type = "raw", var.equal = FALSE)
+
+
+male_int_tost #Intercept is clearly different from zero, but also not practically equivalent to zero with 10% bounds
+male_slope_tost #Slope is clearly different from 1; but practically equivalent within 10% eqbounds
+
+
+#Now perform equivalence tests gene by gene;
 n_val <- 3
 e_bounds <- 3
 
@@ -595,7 +643,33 @@ ggplot(data = FC_fem, aes(x = mean_FC_un, y = mean_FC_e)) +
   scale_y_log10() +
   theme_minimal()
 
-#TOSTs
+#TOST on line for intercept of 0, and slope of 1; claim equivalence for relative expression patterns
+
+#Linear Model
+fem_lm <- lm(formula = log10(mean_FC_e) ~ log10(mean_FC_un), data = FC_fem)
+plot(fem_lm) #not the most normal thing in the world; but alright and lm's are pretty robust against escape from normality
+fem_lm_res <- summary(fem_lm)
+
+#Intercepy TOST
+fem_int_tost <- tsum_TOST(m1 = fem_lm_res$coefficients["(Intercept)","Estimate"], 
+                       sd1 = fem_lm_res$coefficients["(Intercept)", "Std. Error"], 
+                       n1 = nrow(FC_fem), 
+                       eqb = 0.1, eqbound_type = "raw", var.equal = FALSE)
+
+#Slope TOST
+fem_slope_tost <- tsum_TOST(m1 = fem_lm_res$coefficients["log10(mean_FC_un)","Estimate"] - 1, 
+                             sd1 = fem_lm_res$coefficients["log10(mean_FC_un)", "Std. Error"], 
+                             n1 = nrow(FC_fem), 
+                             mu = 1,
+                             eqb = 0.1, eqbound_type = "raw", var.equal = FALSE)
+
+fem_int_tost   #Intercept is clearly different from 0, and not practically equivlent to 0 with 10% bounds
+fem_slope_tost #Intercept is clearly different from 0, and practically equivalent to 1 within 10% bounds
+
+#Small fold-changes appear to be smaller in magnitude in the enriched data, relative to the unenriched
+#Perhaps this is because BC enrichment is giving a closer estimate of true transcript numbers; but why would I think that?
+
+#TOSTs for gene by gene...
 n_val <- 3
 e_bounds <- 3
 
@@ -712,3 +786,42 @@ ggplot(TOST_fem, aes(x = TOST_eff_size, y = Geneid)) +
     panel.grid.minor.y = element_blank(), 
     margins = margin(t = 15, r = 15, l = 15, b = 15, unit = "pt"), 
   )
+
+
+#Is there meaninful inflation of the enriched FCs relative to unenriched
+
+male_FC_data <- data.frame(mean_FC_e = mean(FC_male$mean_FC_e), 
+                           sd_FC_e = sd(FC_male$mean_FC_e), 
+                           mean_FC_un = mean(FC_male$mean_FC_un), 
+                           sd_FC_un = sd(FC_male$mean_FC_un))
+
+ggplot(data = male_FC_data) +
+  geom_point(aes(x = 1, y = mean_FC_e), shape = 22, size = 5, fill = "black") +
+  geom_point(aes(x = 2, y = mean_FC_un), shape = 22, size = 5, fill = "black") +
+  geom_errorbar(aes(x = 1, 
+                    ymin = mean_FC_e - sd_FC_e/sqrt(436), 
+                    ymax = mean_FC_e + sd_FC_e/sqrt(436)), 
+                width = 0.5) +
+  geom_errorbar(aes(x = 2, 
+                    ymin = mean_FC_un - sd_FC_un/sqrt(436), 
+                    ymax = mean_FC_un + sd_FC_un/sqrt(436)), 
+                width = 0.5) +
+  scale_y_continuous(limits = c(0, 1)) +
+  theme_bw()
+
+#Not really any difference with respect to FC to a reference; but maybe not the 
+# best way to look at it; let's try with a boxplot
+
+ggplot(data = FC_male) +
+  geom_violin(aes(x = 1, y = mean_FC_e), alpha = 0.25, colour = "forestgreen") +
+  ggbeeswarm::geom_beeswarm(aes(x = 1, y = mean_FC_e), cex = 2.35, method = "hex", colour = "forestgreen", alpha = 0.6) +
+  geom_violin(aes(x = 2, y = mean_FC_un), alpha = 0.25, colour = "steelblue") +
+  ggbeeswarm::geom_beeswarm(aes(x = 2, y = mean_FC_un), cex = 2.35, method = "hex", colour = "steelblue", alpha = .6) +
+  scale_y_log10() +
+  xlab("") +
+  ylab("Mean FC") +
+  theme_bw()
+
+
+#Distribution of FC is quite similar for both; not surprising since ploting the points against
+# another produces a line with a slope of 1 and intercept of 0;
