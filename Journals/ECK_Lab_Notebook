@@ -301,3 +301,33 @@ To-do:
      
      
 Fixed the code for the global TOSTs; created simple plot with all 3 results
+
+March 26, 2026___________________________________________________________________
+- Took a look at the distribution of relative expression for both datasets and 
+  visualized the results; they are remarkably similar when looking at a violin plot
+  of the FC data; 
+- Went back to the enriched_vs_unenriched.R and fixed the scatterplots and the 
+  combined TOST plot; pretty happy with how these are at the moment, might make 
+  some modifications but they're probably presentation/publication quality
+- Think I fixed a couple bugs in each script; should be fine to run start to finish;
+  but for some reason it gets caught up on one of the TOSTs, despite the line 
+  running perfectly fine when manually executed; probably just need to restart R. 
+- Need to plan out what to include in the presentation at this point; 3-4 minutes 
+  to introduce the data and objective; another minute to explain the approach, 
+  2 minutes to explain the statistical methods; 2-3 minutes to talk about the 
+  global comparisons, 2-3 minutes to talk about the gene-by-gene TOSTs; filler can 
+  be future directions and or talking about some of the smaller things I investigated
+  like how relative expression compares between the two datasets globally, and 
+  simple approaches like spearmans' and pearson correlation. 
+  
+- Pretty good evidence at this point that the enriched data is practically the same
+  as the unenriched with respect to relative representation of the targets, and it 
+  is more than reasonable to use going forwards with using for further experimentation
+
+- I've probably been spending too much time working on this; need to get to marking
+  3y03 midterms; reflecting on the project so far I think I've improved quite a lot
+  with tidyverse manipulations and writing readable code; I think I should improve
+  with keeping the environment more clean; I also see no reason why I need to write out
+  some of the code expicitely for all three datasets; could probably compress quite a bit. 
+  
+  
