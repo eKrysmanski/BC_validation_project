@@ -221,13 +221,14 @@ geNorm is pretty simple to calculate:
 This creates a "ranked list", the remaining two genes would normally be the most stable/
  best reference genes from the candidate list. However, I do not expect that they will be
  the same for both the enriched and unenriched datasets. Instead I want to get this ranked 
- list, then choose the highest rank for the enriched, that is also very high in the unenriched. 
+ list, then choose the lowest rank for the enriched, that is also low in the unenriched. 
  I will probably choose this by feel; but could probably take the sum of the two ranks as a 
  defensible way to decide; although it's probably perfectly reasonable to just pick since 
  choice of a reference is somewhat arbitrary (kinda but not really, but also kinda)
 
 I believe it's acceptable to use a threshold for acceptable references; from the original
- geNorm paper, they suggest an M < 1.5 is acceptable, and and M < 1.0 is preferred. 
+ geNorm paper, they suggest an M < 1.5 is acceptable, and and M < 1.0 is preferred. The 
+ M-values I have gotten have been way under this threshold
  
 Luckily, M-values are used in qPCR to validate reference genes so there is a BioC package
  that can rank references and calculate M values. I see no issue with using CPM in place
@@ -312,6 +313,10 @@ March 26, 2026__________________________________________________________________
 - Think I fixed a couple bugs in each script; should be fine to run start to finish;
   but for some reason it gets caught up on one of the TOSTs, despite the line 
   running perfectly fine when manually executed; probably just need to restart R. 
+- If I did a spearman's ranked correlation with the FC data, it should speak to 
+  whether ranking of FC is preserved; the magnitude of the FCs might differ but
+  the expression patterns might be well-maintained; these are two different things
+  
 - Need to plan out what to include in the presentation at this point; 3-4 minutes 
   to introduce the data and objective; another minute to explain the approach, 
   2 minutes to explain the statistical methods; 2-3 minutes to talk about the 
