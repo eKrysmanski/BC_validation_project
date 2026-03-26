@@ -2,7 +2,7 @@ library(tidyverse)
 
 #Let's take a look at the male data, why is it not practically equivalent?
 
-male_data <- read.csv(file = "data/clean/probe_targets_full.csv", header = TRUE)
+male_data <- read.csv(file = "data/clean/probe_targets_male.csv", header = TRUE)
 
 head(male_data)
 

@@ -15,27 +15,47 @@ data_full <-inner_join(enriched, unenriched, by = "Geneid") %>%
   filter(Geneid %in% targets$gene_symbol)
 
 #Plot meanCPM enriched against unenriched to take a peek at the data
-ggplot(data = data_full, aes(x = CPM_mean_UN, y = CPM_mean_E)) +
-  geom_point() +
-  scale_y_log10(breaks = c(0.1, 1, 10, 100, 1000, 10000, 100000)) +
-  scale_x_log10(breaks = c(0.1, 1, 10, 100, 1000, 10000)) +
-  geom_abline(intercept = 0, slope = 1, color = "indianred", linetype = "dashed") +
-  geom_smooth(method = "lm",formula = y ~ x, se = TRUE, colour ="steelblue") +
-  theme_bw()
 
+ggplot(data = data_full, aes(x = CPM_mean_UN, y = CPM_mean_E)) +
+  geom_point(alpha = 0.5) +
+  scale_y_log10(breaks = 10^(-1:6),
+                labels = scales::label_parse()(paste0("10^", -1:6))) +
+  scale_x_log10(breaks = 10^(-1:5),
+                labels = scales::label_parse()(paste0("10^", -1:5))) +
+  geom_abline(intercept = 0, slope = 1, color = "red", linetype = "dashed") +
+  geom_smooth(method = "lm", formula = y ~ x, se = TRUE, colour = "steelblue") +
+  labs(x = "Mean(CPM)\n[Unenriched]", 
+       y = "Mean(CPM)\n[Enriched]") +
+  theme_bw() +
+  theme(
+    panel.grid.major = element_blank(), 
+    panel.grid.minor = element_blank(),
+    margins = margin(r = 15, l = 15, t = 15, b = 15),
+    axis.title.x = element_text(vjust = .5, size = 12),
+    axis.title.y = element_text(hjust = .5, size = 12),
+    axis.text = element_text(size = 10, colour = "black", font = "arial"),
+    panel.border = element_blank(),
+    axis.line = element_line(color = "black"),
+    axis.line.y.right = element_blank(),
+    axis.line.x.top = element_blank()
+  )
+
+#linear model for full dataset
 full_lm <- lm(log10(CPM_mean_E) ~ log10(CPM_mean_UN), data = data_full)
 plot(full_lm) #Looks alright; maybe a slight neg trend for scale location but data in general looks randomly scattered
 summary(full_lm)    #Probably a few influential points causing this trend
 
 #Equivalence Test against imaginary, perfectly correlated data
-TOST_res_full <- tsum_TOST(m1 = 1.0108, m2 = 1, 
-          sd1 = (0.01491*sqrt(437)), sd2 = 0, 
-          n1 = 437, n2 = 437, 
-          eqb = 0.05, eqbound_type = "raw", 
-          var.equal = FALSE) %>% 
-  print()
+TOST_res_full <- tsum_TOST(m1 = 1.0108 - 1, 
+                           sd1 = (0.01491*sqrt(437)), 
+                           n1 = 437, 
+                           eqb = 0.1,
+                           eqbound_type = "raw", 
+                           var.equal = FALSE)
 
-#Passes equivalence test within 5% difference; chosen arbitrarily but is probably negligable differences
+#Passes equivalence test within 5% difference, but I found a paper that recommended;
+# using 10% eqbounds for testing a slope = 1, so I'll use that.
+
 #Let's visualize the results nicely
 
 #Create dataframe pulling from the TOST results directly, in case anything is ever changed
@@ -43,8 +63,8 @@ TOST_full <- data.frame(
   d_slope = TOST_res_full$effsize[1,1],
   c_int_low = TOST_res_full$effsize[1,3],
   c_int_high = TOST_res_full$effsize[1,4],
-  eqb_high = TOST_res_full$eqb[1,2],
-  eqb_low = TOST_res_full$eqb[1,3])
+  eqb_low = TOST_res_full$eqb[1,2],
+  eqb_high = TOST_res_full$eqb[1,3])
 
 #ggplot
 ggplot(TOST_full, aes(x = d_slope)) +
@@ -53,14 +73,15 @@ ggplot(TOST_full, aes(x = d_slope)) +
   geom_vline(aes(xintercept = 0), linetype = "dashed", color = "black") +
   geom_point(aes(y = 1), size = 5, shape = 15) +
   geom_errorbar(aes(y = 1, 
-                    xmin = c_int_low,
-                    xmax = c_int_high), 
+                    xmin =  c_int_low,
+                    xmax =  c_int_high), 
                 width = 0.35, 
                 size = 0.75) +
   labs(x = expression(Delta~"slope"), 
        title = "Difference in Slope to Zero (Full Data)") +
   scale_y_continuous(limits = c(0.5, 1.5)) +
-  scale_x_continuous(limits = c(TOST_full$eqb_low*2, TOST_full$eqb_high*2)) +
+  scale_x_continuous(limits = c((TOST_full$eqb_low)*2, 
+                                (TOST_full$eqb_high)*2)) +
   theme_minimal(base_family = "Arial") +
   theme(
     axis.line.x = element_line(color = "black", width = 0.75), 
@@ -88,6 +109,7 @@ ggplot(TOST_full, aes(x = d_slope)) +
 enriched_13 <- enriched %>%
   select(Geneid, E1_cpm, E2_cpm, E3_cpm) %>% 
   filter(Geneid %in% targets$gene_symbol)
+
 #calculate mean CPM for subsetted data
 enriched_13_sum <- enriched_13 %>%
   rowwise () %>%
@@ -97,6 +119,7 @@ enriched_13_sum <- enriched_13 %>%
 enriched_46 <- enriched %>%
   select(Geneid, E4_cpm, E5_cpm, E6_cpm) %>% 
   filter(Geneid %in% targets$gene_symbol)
+
 #calculate the mean CPM for subsetted data
 enriched_46_sum <- enriched_46 %>%
   rowwise () %>%
@@ -107,6 +130,7 @@ enriched_46_sum <- enriched_46 %>%
 unenriched_13 <- unenriched %>%
   select(Geneid, L1_CPM, L2_CPM, L3_CPM) %>% 
   filter(Geneid %in% targets$gene_symbol)
+
 #calculate mean CPM and remove zero count data
 unenriched_13_sum <- unenriched_13 %>%
   rowwise () %>%
@@ -117,6 +141,7 @@ unenriched_13_sum <- unenriched_13 %>%
 unenriched_46 <- unenriched %>%
   select(Geneid, L4_CPM, L5_CPM, L6_CPM) %>% 
   filter(Geneid %in% targets$gene_symbol)
+
 #calculate mean CPM and remove zero count data
 unenriched_46_sum <- unenriched_46 %>%
   rowwise () %>%
@@ -132,12 +157,28 @@ male_data <- inner_join(enriched_13_sum, unenriched_13_sum, by = "Geneid")
 #Plot "male" en vs. un 
 
 ggplot(data = male_data, aes(x = CPM_mean_UN13, y = CPM_mean_E13)) +
-  geom_point() +
-  scale_y_log10(breaks = c(0.1, 1, 10, 100, 1000, 10000, 100000)) +
-  scale_x_log10(breaks = c(0.1, 1, 10, 100, 1000, 10000)) +
+  geom_point(alpha = 0.5) +
+  scale_y_log10(breaks = 10^(-1:6),
+                labels = scales::label_parse()(paste0("10^", -1:6))) +
+  scale_x_log10(breaks = 10^(-1:5),
+                labels = scales::label_parse()(paste0("10^", -1:5))) +
   geom_abline(intercept = 0, slope = 1, color = "red", linetype = "dashed") +
   geom_smooth(method = "lm", formula = y ~ x, se = TRUE, colour = "steelblue") +
-  theme_bw()
+  labs(x = "Mean(CPM)\n[Unenriched]", 
+       y = "Mean(CPM)\n[Enriched]") +
+  theme_bw() +
+  theme(
+    panel.grid.major = element_blank(), 
+    panel.grid.minor = element_blank(),
+    margins = margin(r = 15, l = 15, t = 15, b = 15),
+    axis.title.x = element_text(vjust = .5, size = 12),
+    axis.title.y = element_text(hjust = .5, size = 12),
+    axis.text = element_text(size = 10, colour = "black", font = "arial"),
+    panel.border = element_blank(),
+    axis.line = element_line(color = "black"),
+    axis.line.y.right = element_blank(),
+    axis.line.x.top = element_blank()
+  )
 
 #I can see the lm has a slightly greater slope than a theoretical 1:1 line;
 #This might be driven by some of those high count transcripts, or perhaps some 
@@ -152,31 +193,45 @@ plot(male_lm)                     #look ok, scale location line suggests a small
 performance::check_model(male_lm) #Basically showing the same thing; data is a bit non-normal but should be fine for lm
 summary(male_lm)
 
-#Equivalence test against hypothetical perfectly correlated data
-TOST_res_male <- tsum_TOST(m1 = 1.0523, sd1 = (0.1808*sqrt(436)), n1 = 436, 
-                           m2 = 1, sd2 = 0, n2 = 436, 
-                           eqb = 0.05, eqbound_type = "raw", var.equal = FALSE) %>% 
-  print()
+#Extract relevant info from the model summary
+male_lm_sum <- summary(male_lm)
+
+slope_male     <- male_lm_sum$coefficients[2, "Estimate"]
+se_male  <- male_lm_sum$coefficients[2, "Std. Error"]
+n_male         <- male_lm$df.residual + length(coef(male_lm))
+
+#One-sample Equivalence test for a slope
+
+TOST_res_male <- tsum_TOST(m1 = slope_male - 1, 
+                           sd1 = (se_male*sqrt(n_male)), 
+                           n1 = n_male, 
+                           eqb = 0.1,
+                           eqbound_type = "raw", var.equal = FALSE)
 
 #Let's visualize these results
 TOST_male <- data.frame(
-  d_slope = TOST_res_male$effsize[1,1],
+  d_slope = 1 + TOST_res_male$effsize[1,1],
   c_int_low = TOST_res_male$effsize[1,3],
   c_int_high = TOST_res_male$effsize[1,4],
   eqb_high = TOST_res_male$eqb[1,2],
   eqb_low = TOST_res_male$eqb[1,3])
 
 #ggplot
-ggplot(TOST_male, aes(x = d_slope)) +
+ggplot(TOST_male, aes(x = d_slope - 1)) +
   geom_vline(aes(xintercept = eqb_high), linetype = "dashed", color = "red") +
   geom_vline(aes(xintercept = eqb_low),  linetype = "dashed", color = "red") +
   geom_vline(aes(xintercept = 0), linetype = "dashed", color = "black") +
-  geom_point(aes(y = 1), size = 5, shape = 15) +
-  geom_errorbar(aes(y = 1, 
+  geom_point(aes(y = 0.75), 
+             size = 5, 
+             shape = 15, 
+             colour = "navy", 
+             fill = "darkblue") +
+  geom_errorbar(aes(y = 0.75, 
                     xmin = c_int_low,
                     xmax = c_int_high), 
-                width = 0.35, 
-                size = 0.75) +
+                width = 0.1, 
+                size = 0.75, 
+                colour = "navy") +
   labs(x = expression(Delta~"slope"), 
        title = "Difference in Slope to Zero (Male Data)") +
   scale_y_continuous(limits = c(0.5, 1.5)) +
@@ -193,12 +248,12 @@ ggplot(TOST_male, aes(x = d_slope)) +
     margins = margin(t = 15, r = 15, l = 15, b = 15, unit = "pt"), 
   )
 
-#Interesting; looks like it fails the equivalence test for 5%; probably fails 
-# for even 20% slope for the lm was =5% even without se; so not that surprising
-#Made some notes in journal for Mar 19, 2026; but tldr I think i'll divide the 
-# data into low, moderate, and high counts, then do equivalence tests on each. 
-# I think some high counts are skewing the slope upwards, which doesnt mean the 
-# rest of the enriched data is also distorted
+#So equivalence within 10% eqb; but the difference in slope from zero is clear; 
+# So there is a small effect, but it's negligable based on the bounds we set. 
+# Positive slope suggests high count genes are more enriched than lower count genes
+# This is not super concerning; and potentially reflects the true counts, but that's
+# difficult to conclude since at best these measurements are estimates of transcript 
+# numbers. 
 
 #Female Data____________________________________________________________________
 
@@ -207,38 +262,49 @@ female_data <- inner_join(enriched_46_sum, unenriched_46_sum, by = "Geneid")
 #Plot 46 against other
 
 ggplot(data = female_data, aes(x = CPM_mean_UN46, y = CPM_mean_E46)) +
-  geom_point(alpha = 0.6, 
-             color = "magenta") +
-  scale_y_log10(breaks = c(0.1, 1, 10, 100, 1000, 10000, 100000)) +
-  scale_x_log10(breaks = c(0.1, 1, 10, 100, 1000, 10000)) +
-  geom_abline(intercept = 0, slope = 1, color = "indianred", linetype = "dashed") +
-  geom_smooth(method = "lm", formula = y ~ x, se = TRUE, color = "steelblue") +
-  theme_bw()
+  geom_point(alpha = 0.5) +
+  scale_y_log10(breaks = 10^(-1:6),
+                labels = scales::label_parse()(paste0("10^", -1:6))) +
+  scale_x_log10(breaks = 10^(-1:5),
+                labels = scales::label_parse()(paste0("10^", -1:5))) +
+  geom_abline(intercept = 0, slope = 1, color = "red", linetype = "dashed") +
+  geom_smooth(method = "lm", formula = y ~ x, se = TRUE, colour = "steelblue") +
+  labs(x = "Mean(CPM)\n[Unenriched]", 
+       y = "Mean(CPM)\n[Enriched]") +
+  theme_bw() +
+  theme(
+    panel.grid.major = element_blank(), 
+    panel.grid.minor = element_blank(),
+    margins = margin(r = 15, l = 15, t = 15, b = 15),
+    axis.title.x = element_text(vjust = .5, size = 12),
+    axis.title.y = element_text(hjust = .5, size = 12),
+    axis.text = element_text(size = 10, colour = "black", font = "arial"),
+    panel.border = element_blank(),
+    axis.line = element_line(color = "black"),
+    axis.line.y.right = element_blank(),
+    axis.line.x.top = element_blank()
+  )
 
+#Constructing linear model
 fem_lm <- lm(log10(CPM_mean_E46) ~ log10(CPM_mean_UN46), data = female_data)
 performance::check_model(fem_lm)    #not sure I really like performance; maybe I'm just used to base R plots
 plot(fem_lm)
 
 summary(fem_lm)
-dotwhisker::dwplot(fem_lm)
 
-#I'm pretty sure that dotwhisker plots a 95% CI
-#Might be better to visualize the slope by just plotting the raw slope, with 
-# raw equivalence bounds rather than the d_slope; worth considering. 
-#I will definately like to plot the total, male, and female on the same plot
-# at some point to show that the data is not distorted for male, female, or 
-# globally (both male and fem)
+#Pulling out relevant numbers
+fem_lm_sum <- summary(fem_lm)
 
+slope_fem     <- fem_lm_sum$coefficients[2, "Estimate"]
+se_fem  <- fem_lm_sum$coefficients[2, "Std. Error"]
+n_fem         <- fem_lm$df.residual + length(coef(fem_lm))
 
-#Comparing slope of the linear reg. line for female liver from enriched v unenriched
-# to a hypothetical slope of 1, where there is perfect correlation. 
-#Using 5% difference for eqb for now just to look at it; will try to decide on better 
-# eqb to use later, but 5% is probably pretty strict... 
-TOST_res_fem <- tsum_TOST(m1 = 1.01474, m2 = 1,
-                          sd1 = 0.01259*sqrt(437), sd2 = 0,
-                          n1 = 437, n2 = 437,
-                          var.equal = FALSE,
-                          mu = 0, eqb = 0.05, 
+#TOST Test for Female Tissues
+TOST_res_fem <- tsum_TOST(m1 = slope_fem - 1,
+                          sd1 = se_fem*sqrt(n_fem),
+                          n1 = n_fem,
+                          eqb = 0.1,
+                          var.equal = FALSE, 
                           eqbound_type = "raw")
 
 #From this test... 
@@ -259,12 +325,17 @@ ggplot(TOST_fem, aes(x = d_slope)) +
   geom_vline(aes(xintercept = eqb_high), linetype = "dashed", color = "red") +
   geom_vline(aes(xintercept = eqb_low),  linetype = "dashed", color = "red") +
   geom_vline(aes(xintercept = 0), linetype = "dashed", color = "black") +
-  geom_point(aes(y = 1), size = 5, shape = 15) +
+  geom_point(aes(y = 1), 
+             size = 5, 
+             shape = 15, 
+             colour = "#E573A0", 
+             fill = "#E573A0") +
   geom_errorbar(aes(y = 1, 
                     xmin = c_int_low,
                     xmax = c_int_high), 
-                width = 0.35, 
-                size = 0.75) +
+                width = 0.1, 
+                size = 0.75, 
+                colour = "#E573A0") +
   labs(x = expression(Delta~"slope"), 
        title = "Difference in Slope to Zero (Female Data)") +
   scale_y_continuous(limits = c(0.5, 1.5)) +
@@ -302,7 +373,9 @@ summary(MvF_lm)
 
 #Plots look alright; the lm lines up almost perfectly with a 1:1 line, but not quite
 # This natural varaiation is what we want to estimate for deciding on equivalence bounds
-# The standard error is 0.03046 for the slope 
+# The standard error is 0.03046 for the slope; and d_slope is ~0.4. 
+#Based on the reccomendations of that article, and this; I think that 10% is reasonable
+# albeit a little less strict that I would have gone with; maybe a happy medium of 7.5?
 
 #Slope of the fitted lm is 0.95970, with SE of 0.03046; this is a much greater
 # difference than observed plotting enriched v. unenriched female; I think 5% is 
@@ -315,46 +388,77 @@ write.csv(data_full, file = "data/clean/probe_targets_full.csv")
 write.csv(male_data, file = "data/clean/probe_targets_male.csv")
 write.csv(female_data, file = "data/clean/probe_targets_female.csv")
 
-#Messing around with normalization methods....
 
-#Going to try a different way of normalizing, log2(CPM);
-#WARNING -- did a stupid; adding the pseudocount is not done correctly, it's +1 
-#           to counts/seq_depth; this is quick and probably too dirty...
-#Will revisit later. 
+#Try combining all three plots;
+ggplot(TOST_fem, aes(x = d_slope)) +
+  geom_vline(aes(xintercept = eqb_high), linetype = "dashed", color = "black", alpha = 0.5) +
+  geom_vline(aes(xintercept = eqb_low),  linetype = "dashed", color = "black", alpha = 0.5) +
+  geom_vline(aes(xintercept = 0), linetype = "dashed", color = "indianred", alpha = 0.25) +
+  geom_point(aes(y = 1), 
+             size = 5, 
+             shape = 23, 
+             colour = "indianred", 
+             fill = "indianred") +
+  geom_errorbar(aes(y = 1, 
+                    xmin = c_int_low,
+                    xmax = c_int_high), 
+                width = 0, 
+                size = 1.5,
+                alpha = 0.5,
+                colour = "indianred") +
+  geom_text(aes(x = d_slope, y = 1, label = "Female Data"), 
+            size = 4, colour = "indianred", 
+            vjust = -2.5) +
+  geom_point(data = TOST_male,
+             aes(y = 0.75, x = d_slope - 1), 
+             size = 5, 
+             shape = 23, 
+             colour = "navy", 
+             fill = "darkblue") +
+  geom_errorbar(data = TOST_male, 
+                aes(y = 0.75, x = d_slope, 
+                    xmin = c_int_low,
+                    xmax = c_int_high), 
+                width = 0, 
+                size = 1.5,
+                alpha = 0.5,
+                colour = "navy") + 
+  geom_text(data = TOST_male, 
+            aes(x = d_slope - 1, y = 0.75, label = "Male Data"), 
+            size = 4, colour = "navy", 
+            vjust = -2.5) +
+  geom_point(data = TOST_full,
+             aes(y = 1.25), 
+             size = 5, 
+             shape = 23, 
+             colour = "black", 
+             fill = "black") +
+  geom_errorbar(data = TOST_full, 
+                aes(y = 1.25, x = d_slope, 
+                    xmin = c_int_low,
+                    xmax = c_int_high), 
+                width = 0,
+                alpha = 0.5,
+                size = 1.5, 
+                colour = "black") +
+  geom_text(data = TOST_full,
+    aes(x = d_slope, y = 1.25, label = "Full Data"), 
+            size = 4, colour = "black", 
+            vjust = -2.5) +
+  labs(x = expression(Delta ~ "slope")) +
+  scale_y_continuous(limits = c(0.6, 1.4)) +
+  scale_x_continuous(limits = c(TOST_fem$eqb_low*1.5, TOST_fem$eqb_high*1.5)) +
+  theme_minimal(base_family = "Arial") +
+  theme(
+    axis.line.x = element_line(color = "black", width = 0.75), 
+    axis.ticks.x = element_line(color = "black", width = 0.75),
+    axis.text.y = element_blank(),
+    axis.title.y = element_blank(), 
+    axis.title.x = element_text(size = 15, vjust = -1),
+    panel.grid.major.y = element_blank(), 
+    panel.grid.minor.y = element_blank(),
+    panel.grid.major.x = element_blank(), 
+    panel.grid.minor.x = element_blank(),
+    margins = margin(t = 25, r = 15, l = 15, b = 15, unit = "pt"), 
+  )
 
-log2_un <- unenriched %>% 
-  mutate(raw_UN1 = L1_CPM/10E6 + 1, #divide by 1 million and add 1 pseudocount
-         raw_UN2 = L2_CPM/10E6 + 1, 
-         raw_UN3 = L3_CPM/10E6 + 1,
-         log2_UN1 = log2(raw_UN1*10E6), 
-         log2_UN2 = log2(raw_UN2*10E6), 
-         log2_UN3 = log2(raw_UN3*10E6)) %>% 
-  select(Geneid, starts_with("log2_")) %>% 
-  rowwise() %>% 
-  mutate(log2_mean = mean(c_across(2:4)))
-
-log2_en <- enriched %>% 
-  mutate(raw_en1 = E1_cpm/10E6 + 1,
-         raw_en2 = E2_cpm/10E6 + 1, 
-         raw_en3 = E3_cpm/10E6 + 1,
-         log2_EN1 = log2(raw_en1*10E6), 
-         log2_EN2 = log2(raw_en2*10E6), 
-         log2_EN3 = log2(raw_en3*10E6)) %>% 
-  select(Geneid, starts_with("log2_")) %>% 
-  rowwise() %>% 
-  mutate(log2_mean = mean(c_across(2:4)))
-
-log2_male <- inner_join(log2_en, log2_un, by = "Geneid") %>% 
-  filter(Geneid %in% targets$gene_symbol)
-
-ggplot(data = log2_male, aes(x = log2_mean.x, y = log2_mean.y)) +
-  geom_point(alpha = 0.6, 
-             color = "black") +
-  geom_abline(intercept = 0, slope = 1, color = "indianred", linetype = "dashed") +
-  geom_smooth(method = "lm", formula = y ~ x, se = TRUE, color = "steelblue") +
-  theme_bw()
-
-
-#Try another way: mean centering log2(CPM)
-
-cent_un
