@@ -1,3 +1,4 @@
+#Author = Evan C. Krysmanski
 library(tidyverse)
 
 #Let's take a look at the male data, why is it not practically equivalent?

@@ -1,4 +1,5 @@
 #Simple plot to see if the data looks like it's supposed to
+#Author = Evan C. Krysmanski
 library(tidyverse)
 library(ggplot2)
 library(TOSTER)
@@ -23,7 +24,7 @@ ggplot(data = data_full, aes(x = CPM_mean_UN, y = CPM_mean_E)) +
   scale_x_log10(breaks = 10^(-1:5),
                 labels = scales::label_parse()(paste0("10^", -1:5))) +
   geom_abline(intercept = 0, slope = 1, color = "red", linetype = "dashed") +
-  geom_smooth(method = "lm", formula = y ~ x, se = TRUE, colour = "steelblue") +
+  geom_smooth(method = "lm", formula = y ~ x, se = TRUE, colour = "purple") +
   labs(x = "Mean(CPM)\n[Unenriched]", 
        y = "Mean(CPM)\n[Enriched]") +
   theme_bw() +
@@ -268,7 +269,7 @@ ggplot(data = female_data, aes(x = CPM_mean_UN46, y = CPM_mean_E46)) +
   scale_x_log10(breaks = 10^(-1:5),
                 labels = scales::label_parse()(paste0("10^", -1:5))) +
   geom_abline(intercept = 0, slope = 1, color = "red", linetype = "dashed") +
-  geom_smooth(method = "lm", formula = y ~ x, se = TRUE, colour = "steelblue") +
+  geom_smooth(method = "lm", formula = y ~ x, se = TRUE, colour = "indianred") +
   labs(x = "Mean(CPM)\n[Unenriched]", 
        y = "Mean(CPM)\n[Enriched]") +
   theme_bw() +
@@ -287,8 +288,8 @@ ggplot(data = female_data, aes(x = CPM_mean_UN46, y = CPM_mean_E46)) +
 
 #Constructing linear model
 fem_lm <- lm(log10(CPM_mean_E46) ~ log10(CPM_mean_UN46), data = female_data)
-performance::check_model(fem_lm)    #not sure I really like performance; maybe I'm just used to base R plots
-plot(fem_lm)
+#performance::check_model(fem_lm)    #not sure I really like performance; maybe I'm just used to base R plots
+#plot(fem_lm)
 
 summary(fem_lm)
 
@@ -393,7 +394,7 @@ write.csv(female_data, file = "data/clean/probe_targets_female.csv")
 ggplot(TOST_fem, aes(x = d_slope)) +
   geom_vline(aes(xintercept = eqb_high), linetype = "dashed", color = "black", alpha = 0.5) +
   geom_vline(aes(xintercept = eqb_low),  linetype = "dashed", color = "black", alpha = 0.5) +
-  geom_vline(aes(xintercept = 0), linetype = "dashed", color = "indianred", alpha = 0.25) +
+  geom_vline(aes(xintercept = 0), linetype = "dashed", color = "indianred", alpha = 0.5) +
   geom_point(aes(y = 1), 
              size = 5, 
              shape = 23, 

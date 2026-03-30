@@ -1,4 +1,5 @@
 #Looking into relative expression to a reference for comparing gene by gene
+#Author = Evan C. Krysmanski
 ##Reading in data##  
 library(tidyverse)
 library(ggplot2)
@@ -52,14 +53,18 @@ results_full_un <- geNorm(candidates_full_un_CG, ctVal = FALSE)
 
 rank_full_un <- data.frame(results_full_un) %>%
   separate_rows(Genes, sep = "-") %>% 
-  mutate(rank_full_un = c(nrow(.):1))
+  mutate(rank_full_un = c((nrow(.)-1):1,1))
 
 rank_full_en <- data.frame(results_full_en) %>%
   separate_rows(Genes, sep = "-") %>% 
-  mutate(rank_full_en = c(nrow(.):1))
+  mutate(rank_full_en = c((nrow(.)-1):1,1))
 
 rankings_full <- left_join(rank_full_en, rank_full_un, by = "Genes") %>% 
   mutate(total = rank_full_en + rank_full_un) %>% 
+  rename(Gene_ID = "Genes", 
+         M_en = "Avg.M.x", Rank_en = "rank_full_en",  
+         M_un = "Avg.M.y", Rank_un = "rank_full_un", 
+         Combined_rank = "total") %>% 
   print()
 #Looks like best reference gene here is txn2; lowest M-value
 ################################################################################
@@ -110,21 +115,31 @@ FC_data <- inner_join(en_fc, un_fc, by = "Geneid") %>%
 
 ggplot(data = FC_data, aes(x = mean_FC_un, y = mean_FC_e)) +
   geom_point(alpha = 0.5) +
-  geom_abline(intercept = 0, slope = 1, colour = "indianred", linetype = "dashed") +
-  geom_errorbar(aes(ymin = mean_FC_e - sd_FC_e/sqrt(6), 
-                    ymax = mean_FC_e + sd_FC_e/sqrt(6)), 
-                alpha = 0.5) +
-  geom_errorbarh(aes(xmin = mean_FC_un - sd_FC_un/sqrt(6), 
-                     xmax = mean_FC_un + sd_FC_un/sqrt(6)), 
-                 alpha = 0.5) +
-  geom_smooth(method = "lm", formula = y ~ x, colour = "steelblue") +
-  scale_x_log10() +
-  scale_y_log10() +
-  theme_minimal()
+  scale_y_log10(breaks = 10^(-1:3),
+                labels = scales::label_parse()(paste0("10^", -1:3))) +
+  scale_x_log10(breaks = 10^(-1:3),
+                labels = scales::label_parse()(paste0("10^", -1:3))) +
+  geom_abline(intercept = 0, slope = 1, color = "red", linetype = "dashed") +
+  geom_smooth(method = "lm", formula = y ~ x, se = TRUE, colour = "purple") +
+  labs(x = "Mean(CPM/txn2)\n[Unenriched]", 
+       y = "Mean(CPM/txn2)\n[Enriched]") +
+  theme_bw() +
+  theme(
+    panel.grid.major = element_blank(), 
+    panel.grid.minor = element_blank(),
+    margins = margin(r = 15, l = 15, t = 15, b = 15),
+    axis.title.x = element_text(vjust = .5, size = 12),
+    axis.title.y = element_text(hjust = .5, size = 12),
+    axis.text = element_text(size = 10, colour = "black", font = "arial"),
+    panel.border = element_blank(),
+    axis.line = element_line(color = "black"),
+    axis.line.y.right = element_blank(),
+    axis.line.x.top = element_blank()
+  )
 
 #Linear Model
 full_lm <- lm(formula = log10(mean_FC_e) ~ log10(mean_FC_un), data = FC_data)
-plot(full_lm) #not the most normal thing in the world; but alright and lm's are pretty robust against escape from normality
+#plot(full_lm) #not the most normal thing in the world; but alright and lm's are pretty robust against escape from normality
 full_lm_res <- summary(full_lm)
 
 #Intercepy TOST
@@ -135,9 +150,8 @@ full_int_tost <- tsum_TOST(m1 = full_lm_res$coefficients["(Intercept)","Estimate
 
 #Slope TOST
 full_slope_tost <- tsum_TOST(m1 = full_lm_res$coefficients["log10(mean_FC_un)","Estimate"] - 1, 
-                            sd1 = full_lm_res$coefficients["log10(mean_FC_un)", "Std. Error"], 
-                            n1 = nrow(FC_data), 
-                            mu = 1,
+                            sd1 = full_lm_res$coefficients["log10(mean_FC_un)", "Std. Error"]*sqrt(nrow(FC_data)), 
+                            n1 = nrow(FC_data),
                             eqb = 0.1, eqbound_type = "raw", var.equal = FALSE)
 
 full_int_tost   #Intercept is clearly different from 0, and  practically equivalent to 0 with 10% bounds
@@ -205,9 +219,9 @@ ggplot(equivalent_full %>% filter(NHST_p > 0.05), aes(x = TOST_eff_size, y = Gen
   geom_point(size = 1.5, 
              alpha = 0.5,
              shape = 22, 
-             colour = "navy", fill = "darkblue") +
+             colour = "purple4", fill = "purple3") +
   geom_errorbar(aes(y = Geneid, xmin = TOST_ci_low, xmax = TOST_ci_up), 
-                colour = "steelblue", 
+                colour = "purple2", 
                 width = 0, 
                 linewidth = 1, 
                 alpha = 0.5) +
@@ -233,16 +247,16 @@ ggplot(TOST_full, aes(x = TOST_eff_size, y = Geneid)) +
   geom_vline(aes(xintercept = e_bounds),  linetype = "dashed", color = "red") +
   geom_vline(aes(xintercept = 0), linetype = "dashed", color = "black") +
   geom_point(size = 1.5, 
-             alpha = 0.5,
+             alpha = 0.6,
              shape = 22, 
-             colour = "navy", fill = "darkblue") +
+             colour = "purple4", fill = "purple3") +
   geom_errorbar(aes(y = Geneid, xmin = TOST_ci_low, xmax = TOST_ci_up),
-                colour = "steelblue", 
+                colour = "purple2", 
                 width = 0, 
                 linewidth = 1, 
                 alpha = 0.5) +
   labs(x = expression(Delta~"FC (trancript/txn2)"), 
-       title = "Difference in Slope to Zero (Full Data)") +
+       title = "Difference in Relative Expression (Full Data)") +
   scale_x_continuous(limits = c(-20, 20)) +
   theme_minimal(base_family = "Arial") +
   theme(
@@ -365,19 +379,30 @@ FC_male <- inner_join(en_fc_male, un_fc_male, by = "Geneid") %>%
          is.finite(mean_FC_un))
 
 #plot to take a look; looks pretty good
+
 ggplot(data = FC_male, aes(x = mean_FC_un, y = mean_FC_e)) +
   geom_point(alpha = 0.5) +
-  geom_abline(intercept = 0, slope = 1, colour = "indianred", linetype = "dashed") +
-  geom_errorbar(aes(ymin = mean_FC_e - sd_FC_e/sqrt(6), 
-                    ymax = mean_FC_e + sd_FC_e/sqrt(6)), 
-                alpha = 0.5) +
-  geom_errorbarh(aes(xmin = mean_FC_un - sd_FC_un/sqrt(6), 
-                     xmax = mean_FC_un + sd_FC_un/sqrt(6)), 
-                 alpha = 0.5) +
-  geom_smooth(method = "lm", formula = y ~ x, colour = "steelblue") +
-  scale_x_log10() +
-  scale_y_log10() +
-  theme_minimal()
+  scale_y_log10(breaks = 10^(-4:2),
+                labels = scales::label_parse()(paste0("10^", -4:2))) +
+  scale_x_log10(breaks = 10^(-4:2),
+                labels = scales::label_parse()(paste0("10^", -4:2))) +
+  geom_abline(intercept = 0, slope = 1, color = "red", linetype = "dashed") +
+  geom_smooth(method = "lm", formula = y ~ x, se = TRUE, colour = "steelblue") +
+  labs(x = "Mean(CPM/mgst1.2)\n[Unenriched]", 
+       y = "Mean(CPM/mgst1.2)\n[Enriched]") +
+  theme_bw() +
+  theme(
+    panel.grid.major = element_blank(), 
+    panel.grid.minor = element_blank(),
+    margins = margin(r = 15, l = 15, t = 15, b = 15),
+    axis.title.x = element_text(vjust = .5, size = 12),
+    axis.title.y = element_text(hjust = .5, size = 12),
+    axis.text = element_text(size = 10, colour = "black", font = "arial"),
+    panel.border = element_blank(),
+    axis.line = element_line(color = "black"),
+    axis.line.y.right = element_blank(),
+    axis.line.x.top = element_blank()
+  )
 
 #TOST on line for intercept of 0, and slope of 1; claim equivalence for relative expression patterns
 
@@ -475,8 +500,8 @@ ggplot(equivalent_male %>% filter(NHST_p > 0.05), aes(x = TOST_eff_size, y = Gen
                 linewidth = 1, 
                 alpha = 0.5, 
                 colour = "steelblue") +
-  labs(x = expression(Delta~"FC (trancript/txn2)"), 
-       title = "Difference in FC to reference (Males)") +
+  labs(x = expression(Delta~"FC (trancript/mgst1.2)"), 
+       title = "Difference in Relative Expression (Male Data)") +
   scale_x_continuous(limits = c(-5, 5)) +
   theme_minimal(base_family = "Arial") +
   theme(
@@ -506,8 +531,8 @@ ggplot(TOST_male, aes(x = TOST_eff_size, y = Geneid)) +
                 width = 0,
                 alpha = 0.5, 
                 colour = "steelblue") +
-  labs(x = expression(Delta~"FC (FC_enriched - FC_unenriched)"), 
-       title = "Difference in FC to reference (Males)") +
+  labs(x = expression(Delta~"FC (transcript/mgst1.2)"), 
+       title = "Difference in Relative Expresion (Male Data)") +
   scale_x_continuous(limits = c(-25, 20)) +
   theme_minimal(base_family = "Arial") +
   theme(
@@ -631,17 +656,27 @@ FC_fem <- inner_join(en_fc_fem, un_fc_fem, by = "Geneid") %>%
 #plot to take a look; looks pretty good
 ggplot(data = FC_fem, aes(x = mean_FC_un, y = mean_FC_e)) +
   geom_point(alpha = 0.5) +
-  geom_abline(intercept = 0, slope = 1, colour = "indianred", linetype = "dashed") +
-  geom_errorbar(aes(ymin = mean_FC_e - sd_FC_e/sqrt(6), 
-                    ymax = mean_FC_e + sd_FC_e/sqrt(6)), 
-                alpha = 0.5) +
-  geom_errorbarh(aes(xmin = mean_FC_un - sd_FC_un/sqrt(6), 
-                     xmax = mean_FC_un + sd_FC_un/sqrt(6)), 
-                 alpha = 0.5) +
-  geom_smooth(method = "lm", formula = y ~ x, colour = "steelblue") +
-  scale_x_log10() +
-  scale_y_log10() +
-  theme_minimal()
+  scale_y_log10(breaks = 10^(-2:3),
+                labels = scales::label_parse()(paste0("10^", -2:3))) +
+  scale_x_log10(breaks = 10^(-2:3),
+                labels = scales::label_parse()(paste0("10^", -2:3))) +
+  geom_abline(intercept = 0, slope = 1, color = "red", linetype = "dashed") +
+  geom_smooth(method = "lm", formula = y ~ x, se = TRUE, colour = "indianred") +
+  labs(x = "Mean(CPM/sod2)\n[Unenriched]", 
+       y = "Mean(CPM/sod2)\n[Enriched]") +
+  theme_bw() +
+  theme(
+    panel.grid.major = element_blank(), 
+    panel.grid.minor = element_blank(),
+    margins = margin(r = 15, l = 15, t = 15, b = 15),
+    axis.title.x = element_text(vjust = .5, size = 12),
+    axis.title.y = element_text(hjust = .5, size = 12),
+    axis.text = element_text(size = 10, colour = "black", font = "arial"),
+    panel.border = element_blank(),
+    axis.line = element_line(color = "black"),
+    axis.line.y.right = element_blank(),
+    axis.line.x.top = element_blank()
+  )
 
 #TOST on line for intercept of 0, and slope of 1; claim equivalence for relative expression patterns
 
@@ -733,16 +768,16 @@ ggplot(equivalent_fem %>% filter(NHST_p > 0.05), aes(x = TOST_eff_size, y = Gene
   geom_vline(aes(xintercept = 0), linetype = "dashed", color = "black") +
   geom_point(size = 1, 
              alpha = 0.7, 
-             colour = "navy", fill = "darkblue", 
+             colour = "red4", fill = "red3", 
              shape = 22) +
   coord_cartesian(clip = "off") +
   geom_errorbar(aes(y = Geneid, xmin = TOST_ci_low, xmax = TOST_ci_up), 
                 linewidth = 1.5, 
                 width = 0,
                 alpha = 0.5, 
-                colour = "steelblue") +
-  labs(x = expression(Delta~"FC (FC_enriched - FC_unenriched)"), 
-       title = "Difference in FC to reference (Female)") +
+                colour = "indianred") +
+  labs(x = expression(Delta~"FC (transcript/sod2)"), 
+       title = "Difference in Relative Expression (Female Data)") +
   scale_x_continuous(limits = c(-5, 5)) +
   theme_minimal(base_family = "Arial") +
   theme(
@@ -764,17 +799,17 @@ ggplot(TOST_fem, aes(x = TOST_eff_size, y = Geneid)) +
   geom_vline(aes(xintercept = 0), linetype = "dashed", color = "black") +
   geom_point(size = 1.5, 
              alpha = 0.7, 
-             colour = "navy", fill = "darkblue", 
+             colour = "red4", fill = "red3", 
              shape = 22) +
   coord_cartesian(clip = "off") +
   geom_errorbar(aes(y = Geneid, xmin = TOST_ci_low, xmax = TOST_ci_up), 
                 linewidth = 1, 
                 width = 0,
                 alpha = 0.5, 
-                colour = "steelblue") +
-  labs(x = expression(Delta~"FC (FC_enriched - FC_unenriched)"), 
-       title = "Difference in FC to reference (Males)") +
-  scale_x_continuous(limits = c(-25, 20)) +
+                colour = "indianred") +
+  labs(x = expression(Delta~"FC (transcript/sod2)"), 
+       title = "Difference in Relative Expression (Female Data)") +
+  scale_x_continuous(limits = c(-20, 20)) +
   theme_minimal(base_family = "Arial") +
   theme(
     axis.line.x = element_line(color = "black", width = 0.75), 
@@ -824,4 +859,4 @@ ggplot(data = FC_male) +
 
 
 #Distribution of FC is quite similar for both; not surprising since ploting the points against
-# another produces a line with a slope of 1 and intercept of 0;
+# another produces a line with a slope of ~1 and intercept of nearly 0;
