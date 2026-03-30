@@ -46,7 +46,7 @@ normalized_counts <- counts(dds_sf, normalized = TRUE)
 normalized_counts
 normalized_df <- as.data.frame(normalized_counts) %>% rownames_to_column("Geneid")
 View(normalized_df)
-
+write.csv(normalized_df[2:14], file= "data/clean/DESeq2_normalized_for_individual_lm.csv", row.names = FALSE)
 means_table <- normalized_df %>% 
   rowwise() %>% 
   mutate(enriched_mean = mean(c_across(2:7)), 
@@ -66,6 +66,7 @@ view(means_table)
 write.csv(means_table, file = "data/clean/DESeq2_normalized_liver_combined.csv")
 fold_change <- means_table$enriched_mean/means_table$unenriched_mean
 mean(fold_change)
+sd(fold_change)
 # Male and Female Enriched vs Unenriched
 ggplot(data = means_table, aes(x = unenriched_mean, y = enriched_mean)) +
   geom_point() +
@@ -93,9 +94,9 @@ ggplot(data = means_table, aes(x = unenriched_f_mean, y = enriched_f_mean)) +
   geom_smooth(method = "lm",formula = y ~ x, se = TRUE, colour ="steelblue") +
   theme_bw()
 
-lm_combined <- lm(log10(enriched_mean) ~ log10(unenriched_mean), data = means_table)
-lm_male <- lm(log10(enriched_m_mean) ~ log10(unenriched_m_mean), data = means_table)
-lm_female <- lm(log10(enriched_f_mean) ~ log10(unenriched_f_mean), data = means_table)
+lm_combined <- lm(log10(enriched_mean+1) ~ log10(unenriched_mean+1), data = means_table)
+lm_male <- lm(log10(enriched_m_mean+1) ~ log10(unenriched_m_mean+1), data = means_table)
+lm_female <- lm(log10(enriched_f_mean+1) ~ log10(unenriched_f_mean+1), data = means_table)
 plot(lm_combined)
 
 value_table <- summary(lm_combined)$coefficients
@@ -172,28 +173,7 @@ ggplot(TOST_combined, aes(x = d_slope)) +
     panel.grid.minor.y = element_blank(), 
     margins = margin(t = 15, r = 15, l = 15, b = 15, unit = "pt"), )
 
-# Making table for individual gene regressions
-normalized_df$genes <- rownames(normalized_df)
-normal_longer <- pivot_longer(normalized_df,
-  cols = -genes,              
-  names_to = "sample",
-  values_to = "expression")
 
-sample_info <- data.frame(
-  sample = colnames(normalized_df)[1:12],
-  library_type = c("enriched","enriched","enriched","enriched", "enriched","enriched", "unenriched", "unenriched","unenriched","unenriched","unenriched","unenriched"))
-
-linear_ready <- normal_longer %>%
-  left_join(sample_info, by = "sample")
-
-models <- linear_ready %>%
-  group_by(genes) %>%
-  nest() %>%
-  mutate(model = map(data, ~ lm(log10(expression+1) ~ library_type, data = .)))
-
-results <- models %>%
-  mutate(slope = map_dbl(model, ~ coef(.x)[2]))
-view(results)
 
 
 
