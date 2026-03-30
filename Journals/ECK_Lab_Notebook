@@ -266,7 +266,7 @@ Plans for Today:
 - Write some more formal notes on the stats done and tools used so far
 
 
-March 35, 2026__________________________________________________________________
+March 25, 2026__________________________________________________________________
 
 So, the DESEQ2 normalization was not nearly as good as it first appeared; not a 
  single gene appeared the be practically equivalent within massive bounds. this 
@@ -303,7 +303,7 @@ To-do:
      
 Fixed the code for the global TOSTs; created simple plot with all 3 results
 
-March 26, 2026___________________________________________________________________
+March 26-27, 2026___________________________________________________________________
 - Took a look at the distribution of relative expression for both datasets and 
   visualized the results; they are remarkably similar when looking at a violin plot
   of the FC data; 
@@ -317,13 +317,16 @@ March 26, 2026__________________________________________________________________
   whether ranking of FC is preserved; the magnitude of the FCs might differ but
   the expression patterns might be well-maintained; these are two different things
   
-- Need to plan out what to include in the presentation at this point; 3-4 minutes 
-  to introduce the data and objective; another minute to explain the approach, 
-  2 minutes to explain the statistical methods; 2-3 minutes to talk about the 
-  global comparisons, 2-3 minutes to talk about the gene-by-gene TOSTs; filler can 
-  be future directions and or talking about some of the smaller things I investigated
-  like how relative expression compares between the two datasets globally, and 
-  simple approaches like spearmans' and pearson correlation. 
+- Need to plan out what to include in the presentation at this point; 
+        3 minutes    to introduce the data and objective; 
+        1-2          to explain the approach, 
+        1-2          to explain the statistical methods; 
+        2-3 minutes  to talk about the global comparisons, 
+        2-3 minutes  to talk about the gene-by-gene TOSTs; 
+  
+  filler can be future directions and or talking about some of the smaller things 
+  I investigated like how relative expression compares between the two datasets globally, 
+  and simple approaches like spearmans' and pearson correlation. 
   
 - Pretty good evidence at this point that the enriched data is practically the same
   as the unenriched with respect to relative representation of the targets, and it 
@@ -335,4 +338,50 @@ March 26, 2026__________________________________________________________________
   with keeping the environment more clean; I also see no reason why I need to write out
   some of the code expicitely for all three datasets; could probably compress quite a bit. 
   
+- Created draft slides for majority of presentation including principles of equivalence
+  testing, to relative expression and next steps; need to work on more but had to spend
+  quite a lot of time marking and writing feedback for TA course; guess I'm working on
+  this on the weekend
   
+March 28, 2026__________________________________________________________________
+- Went to lab to do some transplanting and plant care
+- Worked on presentation for a few hours; everything now outlined and beggining to 
+  polish; Matt's intro is just a bunch of bullet points by the time I wrapped up;
+  needs to be cut down so we can get into the discussion of data/approach/results
+- I do not think that much detail is really necessary; could be 2 slides
+
+  1 to explain data acquisition with a diagram
+  1 to explain the data we are currently working on and brief context
+
+- Thinking a bit about multiple test corrections; it's pretty obvious to do for 
+  p-values, but what about CIs? That seems to be a bit more vague and debated 
+  at the moment; need to ask about this... 
+  
+March 29, 2026__________________________________________________________________
+- A couple more touch ups; will polish tomorrow morning; hopefully matt isnt done
+  with his intro since it's very basic and wordy still; no need to explain probe 
+  design process at all in my opinion
+  
+
+March 30, 2026__________________________________________________________________
+- Done touching up; need to cut down now; need to speak with matt about his intro; 
+  alot of it is unnecessary detail
+- Spoke to matt; he agreed to reduce intro; gave him the global comparison/slope test
+  to present; wrote out notes for every slide
+- Without intro timed at ~12m30s; so should be within the ~15 minute limit they gave us
+- Will cut down a bit; will get shorter/clearer with practice
+- Might include some animations
+
+Next Steps for analysis:
+- Try to do DEG on the male vs. female for enriched and unenriched
+  - Compare results
+  - Probably means going into DESeq2 territory unless I want to keep it super simple
+  - Could just calculate log2(FC) for each gene; perform pairwise T-tests and then 
+    do BH corrections;
+- Consider new equivalence bounds for RE tosts
+- Will try to focus more on marking and labwork this week; invested considerable
+  time into this project past two weeks
+- Might be able to clean up the geNorm code; I think I could simply include the 
+  enriched and unenriched in same dataframe that is passed to CtrlGene; the comparisons
+  are all within sample so the count differences en vs. un should not have a bearing on 
+  stability values; would probably give the same results so lower priority I think 
