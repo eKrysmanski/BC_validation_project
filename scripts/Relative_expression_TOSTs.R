@@ -170,7 +170,7 @@ TOST_full <- FC_data %>%
   mutate(TOST_up_p = as.vector(tsum_TOST(m1 = mean_FC_e, m2 = mean_FC_un, 
                                          sd1 = sd_FC_e, sd2 = sd_FC_un, 
                                          n1 = n_val, n2 = n_val, eqb = e_bounds, 
-                                         eqbound_type = "raw", var.equal = FALSE,)$TOST["TOST Upper", "p.value"]), 
+                                         eqbound_type = "raw", var.equal = FALSE)$TOST["TOST Upper", "p.value"]), 
          TOST_low_p = as.vector(tsum_TOST(m1 = mean_FC_e, m2 = mean_FC_un, 
                                           sd1 = sd_FC_e, sd2 = sd_FC_un, 
                                           n1 = n_val, n2 = n_val, eqb = e_bounds,
@@ -408,7 +408,7 @@ ggplot(data = FC_male, aes(x = mean_FC_un, y = mean_FC_e)) +
 
 #Linear Model
 male_lm <- lm(formula = log10(mean_FC_e) ~ log10(mean_FC_un), data = FC_male)
-plot(male_lm) #not the most normal thing in the world; but alright and lm's are pretty robust against escape from normality
+#plot(male_lm) #not the most normal thing in the world; but alright and lm's are pretty robust against escape from normality
 male_lm_res <- summary(male_lm)
 
 #Intercept TOST
@@ -682,7 +682,7 @@ ggplot(data = FC_fem, aes(x = mean_FC_un, y = mean_FC_e)) +
 
 #Linear Model
 fem_lm <- lm(formula = log10(mean_FC_e) ~ log10(mean_FC_un), data = FC_fem)
-plot(fem_lm) #not the most normal thing in the world; but alright and lm's are pretty robust against escape from normality
+#plot(fem_lm) #not the most normal thing in the world; but alright and lm's are pretty robust against escape from normality
 fem_lm_res <- summary(fem_lm)
 
 #Intercepy TOST
@@ -860,3 +860,19 @@ ggplot(data = FC_male) +
 
 #Distribution of FC is quite similar for both; not surprising since ploting the points against
 # another produces a line with a slope of ~1 and intercept of nearly 0;
+
+
+#Save some of the dataframes to use in a different script
+FC_data_save <- inner_join(en_fc, un_fc, by = "Geneid") %>% 
+  select(Geneid, starts_with("FC_"), mean_FC_e, sd_FC_e, mean_FC_un, sd_FC_un)
+
+FC_male_save <- inner_join(en_fc_male, un_fc_male, by = "Geneid") %>% 
+  select(Geneid, starts_with("FC_"), mean_FC_e, sd_FC_e, mean_FC_un, sd_FC_un)
+
+FC_fem_save <- inner_join(en_fc_fem, un_fc_fem, by = "Geneid") %>% 
+  select(Geneid, starts_with("FC_"), mean_FC_e, sd_FC_e, mean_FC_un, sd_FC_un)
+
+
+write.csv(FC_data_save, file = "data/clean/RE_data_full.csv", col.names = TRUE)
+write.csv(FC_male_save, file = "data/clean/RE_data_male.csv", col.names = TRUE)
+write.csv(FC_fem_save, file = "data/clean/RE_data_female.csv", col.names = TRUE)
