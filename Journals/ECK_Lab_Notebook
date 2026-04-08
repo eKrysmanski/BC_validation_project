@@ -214,7 +214,7 @@ Basically, measures the stability of the reference gene
 geNorm is pretty simple to calculate:
 1. For a gene, compute pairwise variation with every other gene
 2. Take the average of these variations; this is the M-value
-3. Remove hte gene with the highest M-value (least stable)
+3. Remove the gene with the highest M-value (least stable)
 4. Recalculate M-values with the remaining genes
 5. Repeat until only two genes remain
 
@@ -385,3 +385,53 @@ Next Steps for analysis:
   enriched and unenriched in same dataframe that is passed to CtrlGene; the comparisons
   are all within sample so the count differences en vs. un should not have a bearing on 
   stability values; would probably give the same results so lower priority I think 
+  
+April 7, 2026___________________________________________________________________
+- Looked over bolker comments; should be quite easy to do, I think I've already 
+  done TOSTs on the intercepts for most of the models
+- The NHSTs to determine if a difference in mean RE is clearly more than predefined bounds
+  I think will take the two sample TOST and add a term to the null hypothesis... or change
+  a sign for the equivalence bound term; which should do what I want it to do... 
+SO...
+
+      T_L = [(M_1 - M_2 + L_eq)] / [sigma sqrt(1/n_1 + 1/n_2)]
+      
+      T_U = [(M_1 - M_2 + U_eq)] / [sigma sqrt(1/n_1 + 1/n_2)]
+      
+But, this might not work like I think; maybe I'm overthinking it or thinking wrong
+
+A two-sample t-test with a margin is:
+      
+      T_L = [(M_1 - M_2 - L_eq)] / [sigma sqrt(1/n_1 + 1/n_2)]
+
+- This is also the lower bounds test for TOST; and in a TOST it is testing if the
+  difference is clearly less than the margin;
+- What I want is to test if it is clearly greater than the margin; which I think is
+  as simple as modifying the null hypothesis to H_o: M1-M2 < L_eq; 
+- Basically, instead of using an upper tail test; use the lower tail test
+- Afterwards, I can just use BH to check for RE values clearly less than the margin, 
+  using FDR corrected p-values; this can then be presented using a volcano plot probably?
+- Should maybe try log2 transforming RE to see if that can get everything onto the same
+  plot
+  
+Code for the t-test should be pretty straightforwards; something like this I imagine... 
+
+data_tests <- data %>% 
+                rowwise() %>%  
+                mutate(p_lower = t.test(mean1 - mean2, mu = -3, alternative = "less")$p.value, 
+                       p_upper = t.test(mean1 - mean2, mu = 3, alternative = "greater")$p.value, 
+                       p_lower_adj = p.adjust(p_lower, method = "BH"), 
+                       p_upper_adj = p.adjust(p_upper, method = "BH")
+
+diff_genes <- data_tests %>% 
+                filter(p_lower_adj < 0.05 | p_upper_adj < 0.05)
+                
+I imagine these are two distinct, but similar questions;
+
+TOST: which genes are clearly (practically) equivalent?
+two t-tests with margin (superiority tests?): which genes are clearly outside of the equivalence bounds? 
+                                              i.e., which genes are clearly different?
+
+Time to apply some of this to the script; think I will pull out dataframes with 
+ the RE values, and use a fresh script to look at differences... 
+ 
