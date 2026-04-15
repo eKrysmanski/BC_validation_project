@@ -435,3 +435,61 @@ two t-tests with margin (superiority tests?): which genes are clearly outside of
 Time to apply some of this to the script; think I will pull out dataframes with 
  the RE values, and use a fresh script to look at differences... 
  
+April 8, 2026___________________________________________________________________
+- Applied a lot of the stuff from yesterday; continued to refine and troubleshoot
+- Got to a point where I'm pretty content with the analysis and multiple test corrections
+- Basically... 
+      Did the two-sample tests with margins and found no genes with RE that is 
+          clearly greater than the predefined equivlance bounds/margins, nor clearly
+          less than the predefined equivalence bounds/margins
+      Did the TOSTs manually using t.test() 
+      Calculated the CIs manually using 1-2α/n; which should be bonferonni-adjusted 
+          equivalence bounds
+      Did a logical test to determine "clearly equivalent" and "unclear" genes for 
+          full, male, and female
+      Created volcano plots using adjusted p-values, and colouring by adherence to the 
+          equivalence bounds using adjusted CIs;
+      Lots of time troubleshooting the plots; and code for calculating all the stats
+      
+- Have pretty solid plots for these now; much more content with these
+- Also have insufficient evidence to conclude the "unclearly equivalent" genes are clearly different
+
+Next thing to do will be to take care of tests on intercept of the regression lines; then I think 
+ it is basically time to begin writing. 
+ 
+Need to revisit Bolker comments and see if there is anything else to address;
+
+Could do that DEG analysis and compare results like I proposed earlier as well; this 
+ shouldnt be too difficult; DESeq2 is super easy to use from what I've read about it
+ 
+April 13-14, 2026_______________________________________________________________
+- Started writing up the report
+- Revisited my adjustment of CIs; the bonferonni method is FWER, but the method 
+  that bolker seemed to suggest was FDR (BY)
+- Went back and adjusted things; removed a lot of the bloat from troubleshooting
+- Using 10% FDR adjusted CIs now; not as strict as FWER, but the purpose I'm 
+  using it for is appropriate since it's just exploratory/interrogation for 
+  general trends
+- Also went and looked at CV ranking in addition to geNorm; similar results but 
+  changed the reference from txn2 to akr1a1b for the full dataset; practically the 
+  same results for everything that followed; nothing I could tell that changed 
+- Got my plots looking nice and pretty; decided to use log10(p-val) instead of the neg
+  since it looks more like a conventional volcano plot and that decision doesnt really
+  change interpretation or anything
+- Bunch of other stuff; including minimal effects testing and met volcano plots
+
+April 15, 2026__________________________________________________________________
+- Time to de-spaghettify scripts folder
+- Have successfully de-spaghettified the folder, and fixed a tiny but very 
+  consequential bug. Also made the code much cleaner for calculating RE
+- Current script order
+
+Simple_cleanup.R                Simple cleanup of the raw data; basic filtering and calculating CPM
+Slope_intercept_comparisons.R   Comparing slopes and intercepts to 1/0 respectively using CPM data
+Reference_genes.R               Determining stable reference genes to use for each dataset
+RE_intercepts_and_slopes.R      Calculating RE for each dataset and saving new dataframes; slope and intercept tests
+paired_METs_and_TOSTs.R         METs and TOSTs using paired tests; volcano plots
+
+Initial dataframes used in Simple_cleanup.R found in main/Data
+
+
