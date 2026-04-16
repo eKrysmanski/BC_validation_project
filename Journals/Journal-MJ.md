@@ -21,4 +21,8 @@ TOST individual genes, using mean and sd of normalized data,
 
 Looking at the data from the individual genes and doing TOST on combined data set and sex separated data sets having no genes that passed the TOST. Will try making regressions against the linear models instead of the actual pure read data. Given that he normalization of DESeq should make the enriched and unenriched values the same the slope should equal 0. 
 
+## April 12th 
 Look at normalizing using deseq for the enriched liver genes and for the unenriched liver genes independently. Then do differential expression analysis between sexes which should then see them both have the same differentially expressed genes. However likely to see more differentially expressed genes in the enriched library because of the increased resolution of read counts caused by the baits protocol.  
+
+## April 15th 
+Calculate % chemical defensome from full rna seq library 
