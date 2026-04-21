@@ -2,7 +2,23 @@
 
 **The Data:** The dataset we will be using consists of both conventional RNA-sequencing data and bait-capture target-enriched RNA-sequencing data. Conventional RNA-sequencing data were collected from gill, liver, anterior intestine, and trunk kidney samples, consisting of 3 biological replicates (with 3 tissues pooled per sample) from both male and female zebrafish. The target-enriched RNA-sequencing data were for male and female liver libraries for the validation of the approach, followed by the second round of enrichment for the male and female gill, intestine, and kidney libraries, along with the blank. 
 
-Count data is in a new data directory (main/data/…). 
+Count data is in a data directory (main/data/…). 
+
+## Scripts
+
+Scripts for the analysis are found in main/scripts/.... They include:
+
+Simple_cleanup.R ------------- Simple cleanup of the raw data; basic filtering and calculating CPM
+
+Slope_intercept_comparisons.R ------------- Comparing slopes and intercepts to 1/0 respectively using CPM data, filtering to bait targets
+
+Reference_genes.R ------------- Determining stable reference genes to use for each dataset
+
+RE_intercepts_and_slopes.R ------------- Calculating RE for each dataset and saving new dataframes; slope and intercept tests
+
+paired_METs_and_TOSTs.R ------------- METs and TOSTs using paired tests; volcano plots
+
+These should be run in order, top to bottom, using the raw data found in main/data/... for the cleanup script, then the newly created dataframes found in main/data/clean/... for subsequent scripts. 
 
 ## Overall Objective:
 
